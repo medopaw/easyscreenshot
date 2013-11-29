@@ -47,6 +47,7 @@
         }
 
         var canvas = null;
+        var success = true;
         try {
             canvas = document.createElementNS("http://www.w3.org/1999/xhtml", "html:canvas");
             canvas.height = height;
@@ -59,21 +60,18 @@
             ctx.save();
             ctx.drawWindow(contentWindow, x, y, width, height, "rgb(255,255,255)");
         } catch(err) {
-            canvas = null;
-            canvas = document.createElementNS("http://www.w3.org/1999/xhtml", "html:canvas");
-            var scale = Math.min(1, Math.min(8192 / height, 8192 / width));
-            canvas.height = height * scale;
-            canvas.width = width * scale;
-
-            var ctx = canvas.getContext("2d");
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.scale(scale, scale);
-            ctx.save();
-            ctx.drawWindow(contentWindow, x, y, width, height, "rgb(255,255,255)");
+            success = false;
+        }
+        
+        if (width != canvas.width || height != canvas.height) {
+            success = false;
         }
 
-        sendSnapshot(canvas, ctx);
+        if (success) {
+            sendSnapshot(canvas, ctx);
+        } else {
+            alert('Failed! Please check!');
+        }
     };
 
     var sendSnapshot = function(canvas, ctx) {
@@ -116,8 +114,21 @@
         }
     }
 
+    ns.popupSettings = function() {
+        var features = "chrome,titlebar,toolbar,centerscreen";
+        try {
+            var instantApply = Components.classes["@mozilla.org/preferences-service;1"]
+                             .getService(Components.interfaces.nsIPrefService)
+                             .getBranch("browser.preferences.").getBoolPref("instantApply");
+            features += instantApply ? ",dialog=no" : ",modal";
+        } catch (e) {
+          features += ",modal";
+        }
+        window.openDialog('chrome://easyscreenshot/content/settings-dialog.xul', 'Settings', features).focus();
+    }
+    
     ns.openSnapshotFeedback = function() {
-        gBrowser.selectedTab = gBrowser.addTab('http://mozilla.com.cn/addon/107/?src=snapshotmenu');
+        gBrowser.selectedTab = gBrowser.addTab('http://mozilla.com.cn/addon/325-easyscreenshot/');
     }
 
     window.addEventListener("load", function() {

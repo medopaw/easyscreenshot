@@ -33,6 +33,9 @@
   			<menuitem id="easyscreenshot-snapshot-select" label="&easyscreenshot_snapshot_select;" oncommand="MOA.ESS.Snapshot.ssSelector();event.stopPropagation();"/>
   			<menuitem id="easyscreenshot-snapshot-entire" label="&easyscreenshot_snapshot_entire;" oncommand="MOA.ESS.Snapshot.getSnapshot('entire');event.stopPropagation();"/>
   			<menuitem id="easyscreenshot-snapshot-visible" label="&easyscreenshot_snapshot_visible;" oncommand="MOA.ESS.Snapshot.getSnapshot('visible');event.stopPropagation();"/>
+			<menuseparator/>
+  			<menuitem id="easyscreenshot-snapshot-settings" label="&easyscreenshot_snapshot_settings;" oncommand="MOA.ESS.Snapshot.popupSettings();event.stopPropagation();"/>
+  			<menuitem id="easyscreenshot-snapshot-feedback" label="&easyscreenshot_snapshot_feedback;" oncommand="MOA.ESS.Snapshot.openSnapshotFeedback();event.stopPropagation();"/>
   		</menupopup>
   	</toolbarbutton>
   </toolbarpalette>
