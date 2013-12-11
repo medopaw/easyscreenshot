@@ -1,0 +1,316 @@
+body {
+  background: gray;
+  margin: 0;
+  overflow-y: scroll;
+}
+
+#toolbar {
+  background-image: url(chrome://easyscreenshot/skin/image/toolbar-bg.png);
+  width: 100%;
+  height: 35px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  z-index: 2;
+  text-align: center;
+  cursor: default;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+#toolbar > li {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  list-style: none;
+}
+
+#toolbar > li:not(:last-of-type) {
+  margin: 0 -2px 0 -2px;
+  padding: 7px 30px 8px 30px;
+  border-left: 1px solid #1d2028;
+  background-image: url(chrome://easyscreenshot/skin/image/icons.png),
+                    url(chrome://easyscreenshot/skin/image/button-normal.png);
+  background-origin: content-box, border-box;
+  background-clip: content-box, border-box;
+  background-repeat: no-repeat, no-repeat;
+}
+
+#toolbar >li:nth-last-of-type(2) {
+  border-right: 1px solid #1d2028;
+}
+
+#toolbar > li:last-of-type {
+  float: right;
+  padding: 7px 7px 8px 0;
+  background-image: url(chrome://easyscreenshot/skin/image/icons.png);
+  background-origin: content-box;
+  background-clip: content-box;
+  background-repeat: no-repeat;
+}
+
+#toolbar > li:not(:last-of-type):hover {
+  background-image: url(chrome://easyscreenshot/skin/image/icons.png),
+                    url(chrome://easyscreenshot/skin/image/button-highlight.png);
+}
+
+#toolbar > li.current, #toolbar > li.current:hover {
+  background-image: url(chrome://easyscreenshot/skin/image/icons.png),
+                    url(chrome://easyscreenshot/skin/image/button-pressed.png);
+}
+
+#button-crop {
+  background-position: -20px 0, 0 0;
+}
+
+#button-crop:hover {
+  background-position: -20px -20px, 0 0;
+}
+
+#button-crop.current {
+  background-position: -20px -20px, 0 0;
+}
+
+#button-rectangle {
+  background-position: -40px 0, 0 0;
+}
+
+#button-rectangle:hover {
+  background-position: -40px -20px, 0 0;
+}
+
+#button-rectangle.current {
+  background-position: -40px -20px, 0 0;
+}
+
+#button-circle {
+  background-position: -60px 0, 0 0;
+}
+
+#button-circle:hover {
+  background-position: -60px -20px, 0 0;
+}
+
+#button-circle.current {
+  background-position: -60px -20px, 0 0;
+}
+
+#button-line {
+  background-position: -80px 0, 0 0;
+}
+
+#button-line:hover {
+  background-position: -80px -20px, 0 0;
+}
+
+#button-line.current {
+  background-position: -80px -20px, 0 0;
+}
+
+#button-pencil {
+  background-position: -100px 0, 0 0;
+}
+
+#button-pencil:hover {
+  background-position: -100px -20px, 0 0;
+}
+
+#button-pencil.current {
+  background-position: -100px -20px, 0 0;
+}
+
+#button-text {
+  background-position: -120px 0, 0 0;
+}
+
+#button-text:hover {
+  background-position: -120px -20px, 0 0;
+}
+
+#button-text.current {
+  background-position: -120px -20px, 0 0;
+}
+
+#button-blur {
+  background-position: -140px 0, 0 0;
+}
+
+#button-blur:hover {
+  background-position: -140px -20px, 0 0;
+}
+
+#button-blur.current {
+  background-position: -140px -20px, 0 0;
+}
+
+#button-undo {
+  background-position: -160px 0, 0 0;
+}
+
+#button-undo:hover {
+  background-position: -160px -20px, 0 0;
+}
+
+#button-local {
+  background-position: -180px 0, 0 0;
+}
+
+#button-local:hover {
+  background-position: -180px -20px, 0 0;
+}
+
+#button-copy {
+  background-position: -200px 0, 0 0;
+}
+
+#button-copy:hover {
+  background-position: -200px -20px, 0 0;
+}
+
+#button-cancel {
+  background-position: 0 0;
+}
+
+#button-cancel:hover {
+  background-position: 0 -20px;
+}
+
+#floatbar {
+  background-color: rgba(48, 54, 70, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+  height: 22px;
+  margin: 0;
+  padding: 6px;
+  overflow: hidden;
+  position: fixed;
+  top: 37px;
+  left: 254px;
+  z-index: 2;
+  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.75);
+  cursor: default;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+#floatbar > li {
+  height: 22px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+#button-linewidth {
+  width: 124px;
+}
+
+#button-fontsize {
+  background-image: url(chrome://easyscreenshot/skin/image/fontsize-normal-normal.png);
+  width: 123px;
+}
+
+#button-color {
+  background-image: url(chrome://easyscreenshot/skin/image/color-normal.png);
+  width: 35px;
+  margin-left: 1px;
+}
+/*
+#button-color:hover {
+  background-image: url(chrome://easyscreenshot/skin/image/color-highlight.png);
+}
+
+#button-color.pressed {
+  background-image: url(chrome://easyscreenshot/skin/image/color-pressed.png);
+}
+*/
+#button-color > div {
+  background-color: blue;
+  position: relative;
+  top: 6px;/*12*10, (4,2)*/
+  left: 7px;
+  width: 12px;
+  height: 10px;
+}
+
+#display {
+  display: block;
+  margin: 42px auto 21px;
+}
+
+#crop {
+  overflow: hidden;
+}
+
+#crop, #crop > div, #croptarget > div, #blurcanvas, #pencilcanvas, #rectcanvas, #linecanvas, #circcanvas, #textcanvas, #textinput {
+  position: absolute;
+}
+
+#crop > div:not(#croptarget) {
+  background: rgba(0, 0, 0, 0.6);
+  cursor: crosshair;
+}
+
+#croptarget {
+  cursor: move;
+}
+
+#croptarget > div {
+  background: #ccc;
+  border-radius: 4px;
+  height: 8px;
+  width: 8px;
+}
+
+#ctrlnw, #ctrlne {
+  top: -4px;
+}
+#ctrlne, #ctrlse {
+  right: -4px;
+}
+#ctrlse, #ctrlsw {
+  bottom: -4px;
+}
+#ctrlsw, #ctrlnw {
+  left: -4px;
+}
+#ctrlne, #ctrlsw {
+  cursor: nesw-resize;
+}
+#ctrlnw, #ctrlse {
+  cursor: nwse-resize;
+}
+
+#display.rectcanvas, #display.linecanvas, #display.circcanvas, #rectcanvas, #linecanvas, #circcanvas {
+  cursor: crosshair;
+}
+
+#display.textcanvas, #textcanvas {
+  cursor: text;
+}
+
+#display.blurcanvas, #blurcanvas {
+  cursor: url(chrome://easyscreenshot/skin/cursor-blur.png) 7 7, -moz-grab;
+}
+
+#display.pencilcanvas, #pencilcanvas {
+  cursor: url(chrome://easyscreenshot/skin/cursor-pencil.png) 2 2, -moz-grab;
+}
+
+#textinput {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed red;
+  font: bold 14px/18px Arial,Helvetica,sans-serif;
+  z-index: 1;
+}
+
+#colorpicker {
+  background: -moz-linear-gradient(bottom, #ccc, white);
+  background: linear-gradient(to top, #ccc, white);
+  padding: 5px;
+  position: fixed;
+  top: 42px;
+  z-index: 3;
+}
