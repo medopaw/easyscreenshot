@@ -19,6 +19,16 @@ var Utils = {
             // not really equivalent, but enough here
             return [].some.call(node.children, function(n) n == otherNode);
         }
+    },
+    merge: function(mergeTo, mergeFrom) {
+        var allObject = [mergeTo, mergeFrom].every(function(value) {
+            return typeof value == 'object';
+        });
+        if (allObject) {
+            Object.keys(mergeFrom).forEach(function(key) {
+                mergeTo[key] = mergeFrom[key];
+            });
+        }
     }
 };
 var CropOverlay = {
@@ -544,7 +554,9 @@ var Color = {
     },
     set selected(color) {
         this._selected = color;
-        document.getElementById('button-color').firstChild.style.backgroundColor = color;
+
+        Editor.floatbar.panels.color.setColor(color);
+
         if (this._usePrefix) {
             this._normalCss.style.backgroundImage = '-moz-linear-gradient(bottom, ' + color + ', ' + color + '), -moz-linear-gradient(bottom, #ccc, white)';
             this._hoverCss.style.backgroundImage = '-moz-linear-gradient(bottom, ' + color + ', ' + color + '), -moz-linear-gradient(bottom, white, #ccc)';
@@ -588,9 +600,15 @@ var Color = {
         if (this._colorpicker.style.display == 'none') {
             this._colorpicker.style.display = '';
             document.addEventListener('click', this._listeners.click, false);
+            Editor.floatbar.panels.color.setBackgroundImage({
+                pressed: 0
+            });
         } else if (this._colorpicker.style.display == '') {
             this._colorpicker.style.display = 'none';
             document.removeEventListener('click', this._listeners.click, false);
+            Editor.floatbar.panels.color.setBackgroundImage({
+                pressed: -1
+            });
         }
     }
 }
@@ -609,6 +627,125 @@ var Editor = {
     _ctx: null,
     _current: null,
     _history: [],
+    floatbar: {
+        panels: {},
+        init: function() {
+            var self = this;
+            // Define panel structure
+            var Panel = function(options) {
+                this.hover = -1;
+                this.pressed = -1;
+                this.getIndex = function(evt) {
+                    var rect = this.ele.getBoundingClientRect();
+                    var width = this.ele.clientWidth;
+                    var x = evt.clientX - rect.left;
+                    if (x < 0) {
+                        x = 0;
+                    } else if (x >= width) {
+                        x = width - 1;
+                    }
+                    return Math.floor(x * this.size / width);
+                };
+                this.getBackgroundImage = function() {
+                    var states = [];
+                    for (var i = 0; i < this.size; i++) {
+                        states.push('normal');
+                    }
+                    states[this.hover] = 'highlight';
+                    states[this.pressed] = 'pressed';
+                    return 'url(chrome://easyscreenshot/skin/image/' + this.id + '-' + states.join('-') + '.png)';
+                };
+                this.setBackgroundImage = function(options) {
+                    Utils.merge(this, options);
+                    var newImg = this.getBackgroundImage();
+                    var oldImg = window.getComputedStyle(this.ele).backgroundImage;
+                    if (newImg != oldImg) {
+                        this.ele.style.backgroundImage = newImg;
+                    }
+                };
+                Utils.merge(this, options);
+                this.ele = document.getElementById('button-' + this.id);
+            };
+            // Generate panels
+            [{
+                id: 'linewidth',
+                size: 3,
+                pressed: 0
+            }, {
+                id: 'fontsize',
+                size: 2
+            }, {
+                id: 'color',
+                size: 1,
+                getIndex: function() {
+                    return 0;
+                },
+                setColor: function(color) {
+                    this.ele.firstChild.style.backgroundColor = color;
+                }
+            }].forEach(function(options) {
+                this.panels[options.id] = new Panel(options);
+            }, this);
+            
+            var eventHandler = function(evt) {
+                // Detect which panel is the event on
+                var id = Editor._getID(evt.target);
+                var panel = self.panels[id];
+                // Detect which region is the event on
+                var index = panel.getIndex(evt);
+                // Call different callbacks according to different event types
+                switch (evt.type) {
+                    case 'mousemove': {
+                        panel.hover = index;
+                        break;
+                    }
+                    case 'mouseleave': {
+                        panel.hover = -1;
+                        break;
+                    }
+                    case 'click': {
+                        switch (id) {
+                            case 'linewidth': {
+                                panel.pressed = index;
+                                break;
+                            }
+                            case 'fontsize': {
+                                break;
+                            }
+                            case 'color': {
+                                panel.pressed = panel.pressed < 0 ? 0 : -1;
+                                var rect = panel.ele.getBoundingClientRect();
+                                var picker = Color._colorpicker;
+                                picker.style.top = rect.bottom + 3 + 'px';
+                                picker.style.left = rect.left + 'px';
+                                Color.toggle();
+                                break;
+                            }
+                            default: {
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+                panel.setBackgroundImage();
+                evt.stopPropagation();
+            };
+            [].forEach.call(document.querySelectorAll('#floatbar > li'), function(li) {
+                li.addEventListener('mousemove', eventHandler, false);
+                li.addEventListener('mouseleave', eventHandler, false);
+                li.addEventListener('click', eventHandler, false);
+                var id = Editor._getID(li);
+                if (id == 'linewidth') {
+                    // Set background-image
+                    self.panels.linewidth.setBackgroundImage();
+                }
+            });
+        }
+    },
     get canvas() {
         return this._canvas;
     },
@@ -632,7 +769,7 @@ var Editor = {
     },
     set current(newCurrent) {
         var oldID = this._current ? this._current.id.replace(/^button-/, '') : '';
-        var newID = newCurrent ? this.getID(newCurrent) : '';
+        var newID = newCurrent ? this._getID(newCurrent) : '';
         //Color should not change current control
         /*if (newID == 'color') {
             Color.toggle();
@@ -681,7 +818,7 @@ var Editor = {
         this.updateHistory();
         this._disableUndo();
         this._setupToolbar();
-        this._setupFloatbar();
+        this.floatbar.init();
         var self = this;
         document.body.addEventListener('keypress', function(evt) {
             if (evt.keyCode == 27) {//Esc
@@ -703,9 +840,6 @@ var Editor = {
             control.init();
         });
     },
-    getID: function(ele) {
-        return ele.id.replace(/^button-/, '');
-    },
     updateHistory: function() {
         this._history.push(this.canvasData);
         if (this._history.length > HISTORY_LENGHT_MAX) {
@@ -716,6 +850,9 @@ var Editor = {
             this._enableUndo();
         }
     },
+    _getID: function(ele) {
+        return ele.id.replace(/^button-/, '');
+    },
     _setupToolbar: function() {
         var self = this;
         [].forEach.call(document.querySelectorAll('#toolbar > li'), function(li) {
@@ -724,123 +861,6 @@ var Editor = {
                 self.current = evt.target;
                 evt.stopPropagation();
             }, false);
-        });
-    },
-    _setupFloatbar: function() {
-        var self = this;
-        // diffrerent objects
-        var Panel = function(options) {
-            ['size', 'hover', 'pressed', 'getIndex'].forEach(function(name) {
-                if (options[name] !== undefined) {
-                    this[name] = options[name];
-                }
-                else if (this[name] === undefined) {
-                    this[name] = -1;
-                }
-            }, this);
-            this.getIndex = function(evt) {
-                var ele = evt.target;
-                var rect = ele.getBoundingClientRect();
-                var width = ele.clientWidth;
-                var x = evt.clientX - rect.left;
-                if (x < 0) {
-                    x = 0;
-                }
-                if (x >= width) {
-                    x = width - 1;
-                }
-                return Math.floor(x * this.size / width );
-            }
-        };
-        var panels = {
-            linewidth: new Panel({
-                size: 3,
-                pressed: 0
-            }),
-            fontsize: new Panel({
-                size: 2
-            }),
-            color: new Panel({
-                size: 1,
-                getIndex: function() {
-                    return 0;
-                }
-            })
-        };
-        function getBackgroundImage(id) {
-            var panel = panels[id];
-            var states = [];
-            for (var i = 0; i < panel.size; i++) {
-                states.push('normal');
-            }
-            states[panel.hover] = 'highlight';
-            states[panel.pressed] = 'pressed';
-            return 'url(chrome://easyscreenshot/skin/image/' + id + '-' + states.join('-') + '.png)';
-        }
-        // detect li (using id) evt.target
-        // detect region (simple divison) checked, color special (no calculation)
-        // call different callbacks (mousemove: set hover, mouseleave: clear hover, click: set pressed) evt.type
-        function eventHandler(evt) {
-            var ele = evt.target;
-            if (ele.nodeName == 'div') {
-                ele = ele.parentNode;
-            }
-            var id = self.getID(ele);
-            var panel = panels[id];
-            var index = panel.getIndex(evt);
-            switch (evt.type) {
-                case 'mousemove': {
-                    panel.hover = index;
-                    break;
-                }
-                case 'mouseleave': {
-                    panel.hover = -1;
-                    break;
-                }
-                case 'click': {
-                    switch (id) {
-                        case 'linewidth': {
-                            panel.pressed = index;
-                            break;
-                        }
-                        case 'fontsize': {
-                            break;
-                        }
-                        case 'color': {
-                            panel.pressed = panel.pressed < 0 ? 0 : -1;
-                            var picker = document.getElementById('colorpicker');
-                            var rect = ele.getBoundingClientRect();
-                            picker.style.top = rect.bottom + 3 + 'px';
-                            picker.style.left = rect.left + 'px';
-                            Color.toggle();
-                            break;
-                        }
-                        default: {
-                            break;
-                        }
-                    }
-                    break;
-                }
-                default: {
-                    break;
-                }
-            }
-            var newImg = getBackgroundImage(id);
-            var oldImg = window.getComputedStyle(ele).backgroundImage;
-            if (newImg != oldImg) {
-                ele.style.backgroundImage = newImg;
-            }
-            evt.stopPropagation();
-        }
-        [].forEach.call(document.querySelectorAll('#floatbar > li'), function(li) {
-            li.addEventListener('mousemove', eventHandler, false);
-            li.addEventListener('mouseleave', eventHandler, false);
-            li.addEventListener('click', eventHandler, false);
-            var id = self.getID(li);
-            if (id == 'linewidth') {
-                // Set background-image
-                li.style.backgroundImage = getBackgroundImage(id);
-            }
         });
     },
     _undo: function() {
