@@ -226,7 +226,6 @@ body {
 }
 */
 #button-color > div {
-  background-color: blue;
   position: relative;
   top: 6px;/*12*10, (4,2)*/
   left: 7px;

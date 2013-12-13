@@ -248,7 +248,7 @@ var BaseControl = {
         this._canvas.top = y - dy;
         this._canvas.width = dw;
         this._canvas.height = dh;
-        this._ctx.lineWidth = 3.0;
+        this._ctx.lineWidth = this.lineWidth;
         this._ctx.strokeStyle = Color.selected;
         this._ctx.save();
         this._stroke(this._ctx, dx, dy, w, h);
@@ -265,12 +265,55 @@ var BaseControl = {
     },
     _refreshImageData: function() {
         var [x, y, w, h] = this._rect;
-        Editor.ctx.lineWidth = 3.0;
+        Editor.ctx.lineWidth = this.lineWidth;
         Editor.ctx.strokeStyle = Color.selected;
         Editor.ctx.save();
         this._stroke(Editor.ctx, x, y, w, h);
     },
     _stroke: function(ctx, x, y, w, h) {
+    },
+    _lineWidth: {
+        value: 0,
+        levels: [3, 6, 9]
+    },
+    get lineWidth() {
+        var _lineWidth = this._lineWidth;
+        if (!_lineWidth.value) {
+            var prefs = Components.classes['@mozilla.org/preferences-service;1']
+                                        .getService(Components.interfaces.nsIPrefService)
+                                        .getBranch('snapshot.settings.');
+            try {
+                _lineWidth.value = prefs.getIntPref('lineWidth');
+            } catch (ex) {
+                // lineWidth not set in preference. Trigger set function.
+                this.lineWidthLevel = 1;
+            }
+        }
+        return _lineWidth.value;
+    },
+    set lineWidth(value) {
+        var _lineWidth = this._lineWidth;
+        if (typeof value == 'string') {
+            value = _lineWidth.level[value];
+        }
+        if (!isNaN(value) && _lineWidth.value != value) {
+            _lineWidth.value = value;
+            var prefs = Components.classes['@mozilla.org/preferences-service;1']
+                                        .getService(Components.interfaces.nsIPrefService)
+                                        .getBranch('snapshot.settings.');
+            prefs.setIntPref('lineWidth', value);
+        }
+    },
+    get lineWidthLevel() {
+    	return this._lineWidth.levels.indexOf(this.lineWidth);
+    },
+    set lineWidthLevel(value) {
+    	this.lineWidth = this._lineWidth.levels[value];
+    },
+    _fontSize: null,
+    get fontSize() {
+    },
+    set fontSize(fontSize) {
     },
     init: function() {
         this._listeners['mousedown'] = this._mousedown.bind(this);
@@ -506,7 +549,7 @@ var Pencil = {
         var rx = evt.pageX - this._origRect[0];
         var ry = evt.pageY - this._origRect[1];
         this._startxy = [rx, ry];
-        Editor.ctx.lineWidth = 3.0;
+        Editor.ctx.lineWidth = BaseControl.lineWidth;
         Editor.ctx.strokeStyle = Color.selected;
                                     Editor.ctx.moveTo(rx, ry);
                                     Editor.ctx.beginPath();
@@ -544,26 +587,34 @@ var Pencil = {
 };
 var Color = {
     _colorpicker: null,
-    _hoverCss: null,
-    _normalCss: null,
     _listeners: {},
-    _selected: '#FF0000',
+    _selected: null,
     _usePrefix: false,
     get selected() {
+    	if (!this._selected) {
+            var prefs = Components.classes['@mozilla.org/preferences-service;1']
+                                        .getService(Components.interfaces.nsIPrefService)
+                                        .getBranch('snapshot.settings.');
+            try {
+                this._selected = prefs.getCharPref('color');
+            } catch (ex) {
+                // color not set in preference. Trigger set function.
+                this.selected = '#FF0000';
+            }
+    	}
         return this._selected;
     },
-    set selected(color) {
-        this._selected = color;
+    set selected(value) {
+    	if (this._selected != value) {
+	        this._selected = value;
 
-        Editor.floatbar.panels.color.setColor(color);
+	        Editor.floatbar.panels.color.setColor(value);
 
-        if (this._usePrefix) {
-            this._normalCss.style.backgroundImage = '-moz-linear-gradient(bottom, ' + color + ', ' + color + '), -moz-linear-gradient(bottom, #ccc, white)';
-            this._hoverCss.style.backgroundImage = '-moz-linear-gradient(bottom, ' + color + ', ' + color + '), -moz-linear-gradient(bottom, white, #ccc)';
-        } else {
-            this._normalCss.style.backgroundImage = 'linear-gradient(to top, ' + color + ', ' + color + '), linear-gradient(to top, #ccc, white)';
-            this._hoverCss.style.backgroundImage = 'linear-gradient(to top, ' + color + ', ' + color + '), linear-gradient(to top, white, #ccc)';
-        }
+            var prefs = Components.classes['@mozilla.org/preferences-service;1']
+                                        .getService(Components.interfaces.nsIPrefService)
+                                        .getBranch('snapshot.settings.');
+            prefs.setCharPref('color', value);
+	    }
     },
     _click: function(evt) {
         this.toggle();
@@ -573,42 +624,26 @@ var Color = {
         this.toggle();
     },
     init: function() {
+    	// Setup colorpicker
         this._colorpicker = document.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'colorpicker');
         this._colorpicker.id = 'colorpicker';
         document.body.appendChild(this._colorpicker);
         this._listeners['click'] = this._click.bind(this);
         this._listeners['select'] = this._select.bind(this);
         this._colorpicker.addEventListener('select', this._listeners.select, false);
+
+        // Hide colorpicker
         this.toggle();
-        var _cssRules = document.styleSheets[0].cssRules;
-        for (var i = 0, l = _cssRules.length; i < l; i++) {
-            if (_cssRules[i].selectorText == '#toolbar > li:nth-of-type(1)') {
-                this._normalCss = _cssRules[i];
-                this._usePrefix = /^-moz-/.test(this._normalCss.style.backgroundImage);
-                continue;
-            }
-            if (_cssRules[i].selectorText == '#toolbar > li:nth-of-type(1):hover') {
-                this._hoverCss = _cssRules[i];
-                continue;
-            }
-            if (this._normalCss && this._hoverCss) {
-                break;
-            }
-        }
     },
     toggle: function() {
         if (this._colorpicker.style.display == 'none') {
             this._colorpicker.style.display = '';
             document.addEventListener('click', this._listeners.click, false);
-            Editor.floatbar.panels.color.setBackgroundImage({
-                pressed: 0
-            });
+            Editor.floatbar.panels.color.setBackgroundImage({ pressed: 0 });
         } else if (this._colorpicker.style.display == '') {
             this._colorpicker.style.display = 'none';
             document.removeEventListener('click', this._listeners.click, false);
-            Editor.floatbar.panels.color.setBackgroundImage({
-                pressed: -1
-            });
+            Editor.floatbar.panels.color.setBackgroundImage({ pressed: -1 });
         }
     }
 }
@@ -635,6 +670,7 @@ var Editor = {
             var Panel = function(options) {
                 this.hover = -1;
                 this.pressed = -1;
+                this.init = function() {};
                 this.getIndex = function(evt) {
                     var rect = this.ele.getBoundingClientRect();
                     var width = this.ele.clientWidth;
@@ -670,7 +706,10 @@ var Editor = {
             [{
                 id: 'linewidth',
                 size: 3,
-                pressed: 0
+                pressed: BaseControl.lineWidthLevel,
+                init: function() {
+                    this.setBackgroundImage();
+                }
             }, {
                 id: 'fontsize',
                 size: 2
@@ -680,13 +719,16 @@ var Editor = {
                 getIndex: function() {
                     return 0;
                 },
+                init: function() {
+                    this.setColor(Color.selected);
+                },
                 setColor: function(color) {
                     this.ele.firstChild.style.backgroundColor = color;
                 }
             }].forEach(function(options) {
                 this.panels[options.id] = new Panel(options);
             }, this);
-            
+
             var eventHandler = function(evt) {
                 // Detect which panel is the event on
                 var id = Editor._getID(evt.target);
@@ -706,6 +748,7 @@ var Editor = {
                     case 'click': {
                         switch (id) {
                             case 'linewidth': {
+                                BaseControl.lineWidthLevel = index;
                                 panel.pressed = index;
                                 break;
                             }
@@ -738,11 +781,7 @@ var Editor = {
                 li.addEventListener('mousemove', eventHandler, false);
                 li.addEventListener('mouseleave', eventHandler, false);
                 li.addEventListener('click', eventHandler, false);
-                var id = Editor._getID(li);
-                if (id == 'linewidth') {
-                    // Set background-image
-                    self.panels.linewidth.setBackgroundImage();
-                }
+                self.panels[Editor._getID(li)].init();
             });
         }
     },
@@ -873,10 +912,10 @@ var Editor = {
         }
     },
     _enableUndo: function() {
-        Utils.qs('#toolbar > li:nth-of-type(7)').removeAttribute('disabled');
+        Utils.qs('#button-undo').removeAttribute('disabled');
     },
     _disableUndo: function() {
-        Utils.qs('#toolbar > li:nth-of-type(7)').setAttribute('disabled', 'true');
+        Utils.qs('#button-undo').setAttribute('disabled', 'true');
     },
     _saveLocal: function() {
         var { classes: Cc, interfaces: Ci } = Components;
