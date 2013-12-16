@@ -236,10 +236,10 @@ var BaseControl = {
           this._dir = 4;
         this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
         this._rect = [x, y, w, h];
-        var dx = Math.min(3, x);
-        var dy = 3;
-        var dw = Math.min(x + w + 3, this._origRect[2]) - x + dx;
-        var dh = Math.min(y + h + 3, this._origRect[3]) - y + dy;
+        var dx = Math.min(this.lineWidth, x);
+        var dy = this.lineWidth;
+        var dw = Math.min(x + w + this.lineWidth, this._origRect[2]) - x + dx;
+        var dh = Math.min(y + h + this.lineWidth, this._origRect[3]) - y + dy;
         x += this._origRect[0];
         y += this._origRect[1];
         this._canvas.style.left = x - dx + 'px';
@@ -427,7 +427,7 @@ var TextInput = {
         var x = parseInt(this._input.style.left, 10) - this._origRect[0];
         var y = parseInt(this._input.style.top, 10) - this._origRect[1];
         if (msg) {
-            Editor.ctx.font = 'bold 14px/18px Arial,Helvetica,sans-serif';
+            Editor.ctx.font = 'bold 14px Arial,Helvetica,sans-serif';
             // why the offset ? baseline ?
             Editor.ctx.fillText(msg, x + 1, y + 14 + 1);
             Editor.updateHistory();
@@ -953,17 +953,17 @@ var Editor = {
         var channel = ios.newChannel(imagedata, null, null);
         var input = channel.open();
         var imgTools = Components.classes["@mozilla.org/image/tools;1"].getService(Components.interfaces.imgITools);
-    
+
         var container = {};
         imgTools.decodeImageData(input, channel.contentType, container);
-    
+
         var wrapped = Components.classes["@mozilla.org/supports-interface-pointer;1"].createInstance(Components.interfaces.nsISupportsInterfacePointer);
         wrapped.data = container.value;
-    
+
         var trans = Components.classes["@mozilla.org/widget/transferable;1"].createInstance(Components.interfaces.nsITransferable);
         trans.addDataFlavor(channel.contentType);
         trans.setTransferData(channel.contentType, wrapped, channel.contentLength);
-    
+
         var clipid = Components.interfaces.nsIClipboard;
         var clip = Components.classes["@mozilla.org/widget/clipboard;1"].getService(clipid);
         clip.setData(trans, null, clipid.kGlobalClipboard);
