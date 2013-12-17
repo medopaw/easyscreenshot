@@ -863,11 +863,11 @@ var Editor = {
                 evt.preventDefault();
             }
             if (evt.ctrlKey && evt.charCode == 115) {//^S
-                self.current = {textContent: 'local'};
+                self.current = {id: 'local'};
                 evt.preventDefault();
             }
             if (evt.ctrlKey && evt.charCode == 122) {//^Z
-                self.current = {textContent: 'undo'};
+                self.current = {id: 'undo'};
             }
         }, false);
         [CropOverlay, Rect, Line, Pencil, Circ, TextInput, Blur, Color].forEach(function(control) {
