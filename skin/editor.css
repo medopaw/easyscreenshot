@@ -29,7 +29,7 @@ body {
 }
 
 #toolbar > li:not(:last-of-type) {
-  margin: 0 -2px 0 -2px;
+  margin: 0 -3px 0 -3px;
   padding: 7px 30px 8px 30px;
   border-left: 1px solid #1d2028;
   background-image: url(chrome://easyscreenshot/skin/image/icons.png),
@@ -40,6 +40,7 @@ body {
 }
 
 #toolbar >li:nth-last-of-type(2) {
+  padding-right: 28px;
   border-right: 1px solid #1d2028;
 }
 
@@ -179,6 +180,7 @@ body {
 }
 
 #floatbar {
+  display: none;
   background-color: rgba(48, 54, 70, 0.6);
   border: 1px solid rgba(0, 0, 0, 0.3);
   border-radius: 3px;
@@ -188,7 +190,6 @@ body {
   overflow: hidden;
   position: fixed;
   top: 37px;
-  left: 254px;
   z-index: 2;
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.75);
   cursor: default;

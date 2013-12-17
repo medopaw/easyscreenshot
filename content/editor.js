@@ -591,7 +591,7 @@ var Color = {
     _selected: null,
     _usePrefix: false,
     get selected() {
-    	if (!this._selected) {
+        if (!this._selected) {
             var prefs = Components.classes['@mozilla.org/preferences-service;1']
                                         .getService(Components.interfaces.nsIPrefService)
                                         .getBranch('snapshot.settings.');
@@ -601,14 +601,14 @@ var Color = {
                 // color not set in preference. Trigger set function.
                 this.selected = '#FF0000';
             }
-    	}
+        }
         return this._selected;
     },
     set selected(value) {
-    	if (this._selected != value) {
-	        this._selected = value;
+        if (this._selected != value) {
+            this._selected = value;
 
-	        Editor.floatbar.panels.color.setColor(value);
+            Editor.floatbar.panels.color.setColor(value);
 
             var prefs = Components.classes['@mozilla.org/preferences-service;1']
                                         .getService(Components.interfaces.nsIPrefService)
@@ -624,7 +624,7 @@ var Color = {
         this.toggle();
     },
     init: function() {
-    	// Setup colorpicker
+        // Setup colorpicker
         this._colorpicker = document.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'colorpicker');
         this._colorpicker.id = 'colorpicker';
         document.body.appendChild(this._colorpicker);
@@ -633,14 +633,14 @@ var Color = {
         this._colorpicker.addEventListener('select', this._listeners.select, false);
 
         // Hide colorpicker
-        this.toggle();
+        this.toggle(false);
     },
-    toggle: function() {
-        if (this._colorpicker.style.display == 'none') {
+    toggle: function(visible) {
+        if ((visible === true || visible === undefined) && this._colorpicker.style.display == 'none') {
             this._colorpicker.style.display = '';
             document.addEventListener('click', this._listeners.click, false);
             Editor.floatbar.panels.color.setBackgroundImage({ pressed: 0 });
-        } else if (this._colorpicker.style.display == '') {
+        } else if ((visible === false || visible === undefined) && this._colorpicker.style.display == '') {
             this._colorpicker.style.display = 'none';
             document.removeEventListener('click', this._listeners.click, false);
             Editor.floatbar.panels.color.setBackgroundImage({ pressed: -1 });
@@ -662,10 +662,13 @@ var Editor = {
     _ctx: null,
     _current: null,
     _history: [],
+    buttons: {},
     floatbar: {
+        ele: null,
         panels: {},
         init: function() {
             var self = this;
+            this.ele = Utils.qs('#floatbar');
             // Define panel structure
             var Panel = function(options) {
                 this.hover = -1;
@@ -700,7 +703,7 @@ var Editor = {
                     }
                 };
                 Utils.merge(this, options);
-                this.ele = document.getElementById('button-' + this.id);
+                this.ele = Utils.qs('#button-' + this.id);
             };
             // Generate panels
             [{
@@ -783,6 +786,18 @@ var Editor = {
                 li.addEventListener('click', eventHandler, false);
                 self.panels[Editor._getID(li)].init();
             });
+        },
+        show: function(button, panelsToShow) {
+            this.ele.style.left = button.getBoundingClientRect().left + 'px';
+            this.ele.style.display = 'block';
+
+            Object.keys(this.panels).forEach(function(id) {
+                this.panels[id].ele.style.display = panelsToShow.indexOf(id) >= 0 ? 'inline-block' : 'none';
+            }, this);
+        },
+        hide: function() {
+            this.ele.style.display = 'none';
+            Color.toggle(false);
         }
     },
     get canvas() {
@@ -807,49 +822,21 @@ var Editor = {
         return this._current;
     },
     set current(newCurrent) {
-        var oldID = this._current ? this._current.id.replace(/^button-/, '') : '';
+        var self = this;
+
+        var oldID = this._current ? this._getID(this._current) : '';
         var newID = newCurrent ? this._getID(newCurrent) : '';
-        //Color should not change current control
-        /*if (newID == 'color') {
-            Color.toggle();
-            return;
-        }*/
-        //Cancel current control, conditionally crop
-        if (oldID) {
-            this._current.classList.remove('current');
-            this.canvas.className = '';
-            this._controls[oldID].cancel();
+
+        var oldBtn = this.buttons[oldID];
+        var newBtn = this.buttons[newID];
+
+        // Clear last button, normally clearing style and hiding floatbar
+        if (oldBtn && !oldBtn.simple) {
+            oldBtn.clear();
         }
-        if (oldID == 'crop' && newID == 'crop') {
-            this._controls[newID].stop();
-        }
-        //No need to set Undo/Local as current control
-        if (newID == 'undo') {
-            this._undo();
-        }
-        if (newID == 'local') {
-            this._saveLocal();
-        }
-        if (newID == 'copy') {
-            this._copyToClipboard();
-        }
-        if (newID == 'cancel') {
-            this._cancelAndClose();
-        }
-        if (['undo', 'local', 'copy', ''].indexOf(newID) > -1 || oldID == newID) {
-            this._current = null;
-            return;
-        }
-        //Set new current control
-        newCurrent.classList.add('current');
-        this._controls[newID].start(
-            parseInt(this.canvas.offsetLeft, 10),
-            parseInt(this.canvas.offsetTop, 10),
-            parseInt(this.canvas.offsetWidth, 10),
-            parseInt(this.canvas.offsetHeight, 10)
-        );
-        this._current = newCurrent;
-        return;
+        // finish() will only be called when a pressed button is clicked
+        // start() is the main task this button is binding on
+        newBtn[!newBtn.simple && newID == oldID ? 'finish' : 'start']();
     },
     init: function() {
         this.canvas = Utils.qs('#display');
@@ -901,6 +888,88 @@ var Editor = {
                 evt.stopPropagation();
             }, false);
         });
+        this._setupButtons();
+    },
+    _setupButtons: function() {
+        var self = this;
+        // Define floatbar types to avoid repetition
+        var floatbars = {
+            line: ['linewidth', 'color'],
+            text: ['fontsize', 'color']
+        };
+        // Define button structure
+        var Button = function(options) {
+            Utils.merge(this, options);
+            // options must has id
+            this.ele = Utils.qs('#button-' + this.id);
+        };
+        Utils.merge(Button.prototype, {
+            start: function() {
+                this.ele.classList.add('current');
+                self._current = this.ele;
+                if (this.floatbar) {
+                    self.floatbar.show(this.ele, this.floatbar);
+                }
+                self._controls[this.id].start(
+                    parseInt(self.canvas.offsetLeft, 10),
+                    parseInt(self.canvas.offsetTop, 10),
+                    parseInt(self.canvas.offsetWidth, 10),
+                    parseInt(self.canvas.offsetHeight, 10)
+                );
+            },
+            finish: function() {},
+            clear: function() {
+                self._current.classList.remove('current');
+                self._current = null;
+                if (this.floatbar) {
+                    self.floatbar.hide();
+                }
+                self.canvas.className = '';
+                self._controls[this.id].cancel();
+            }
+        });
+        // Generate buttons
+        [{
+            id: 'crop',
+            finish: function() {
+                self._controls.crop.stop();
+            }
+        }, {
+            id: 'rectangle',
+            floatbar: floatbars.line
+        }, {
+            id: 'line',
+            floatbar: floatbars.line
+        }, {
+            id: 'pencil',
+            floatbar: floatbars.line
+        }, {
+            id: 'circle',
+            floatbar: floatbars.line
+        }, {
+            id: 'text',
+            floatbar: floatbars.text
+        }, {
+            id: 'blur'
+        }, {
+            id: 'undo',
+            simple: true,
+            start: self._undo.bind(self)
+        }, {
+            id: 'local',
+            simple: true,
+            start: self._saveLocal.bind(self)
+        }, {
+            id: 'copy',
+            simple: true,
+            start: self._copyToClipboard.bind(self)
+        }, {
+            id: 'cancel',
+            simple: true,
+            start: self._cancelAndClose.bind(self)
+        }].forEach(function(options) {
+            this.buttons[options.id] = new Button(options);
+        }, this);
     },
     _undo: function() {
         if(this._history.length > 1) {
