@@ -666,6 +666,7 @@ var Editor = {
     floatbar: {
         ele: null,
         panels: {},
+        buttonEle: null,
         init: function() {
             var self = this;
             this.ele = Utils.qs('#floatbar');
@@ -787,8 +788,15 @@ var Editor = {
                 self.panels[Editor._getID(li)].init();
             });
         },
+        reposition: function() {console.log('reposition');
+            if (this.buttonEle) {
+                this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
+                console.log(this.ele.style.left);
+            }
+        },
         show: function(button, panelsToShow) {
-            this.ele.style.left = button.getBoundingClientRect().left + 'px';
+            this.buttonEle = button;
+            this.reposition();
             this.ele.style.display = 'block';
 
             Object.keys(this.panels).forEach(function(id) {
@@ -1050,10 +1058,15 @@ var Editor = {
 window.addEventListener('load', function(evt) {
     Editor.init();
 }, false);
+/*
 window.addEventListener('beforeunload', function(evt) {
     if (Editor._history.length > 1) {
         evt.preventDefault();
     }
+}, false);
+*/
+window.addEventListener('resize', function(evt) {
+    Editor.floatbar.reposition();
 }, false);
 
 })();
