@@ -801,14 +801,18 @@
     	var action_close = function(event) {
 
       	widget.window.ssInstalled = false;
-    		event_release(notice, 'command', action_close);
+		if (notice) {
+		    event_release(notice, 'command', action_close);
+		}
     		event_release(widget.window, 'unload', action_close);
     		event_release(widget.window, 'keydown', action_keydown);
 
     		widget.root.removeChild(styles);
     		widget.root.removeChild(widget.overlay);
     		widget.root.removeChild(widget.selection);
-    		notices.removeAllNotifications(true);
+		if (notices) {
+		    notices.removeAllNotifications(true);
+		}
     	};
     	var action_save = function() {
         //todo: show editor
@@ -828,7 +832,16 @@
 
     		event_release(widget.window, 'keydown', action_keydown);
     	};
+	var action_know = function() {
+	    if (notices) {
+		notices.removeCurrentNotification();
+	    }
+	    prefs.setBoolPref('notification', false);
+	};
     	var append_notice = function() {
+		if (!notices) {
+		    return null;
+		}
     		return notices.appendNotification(
     			getString("notice"), 'ssSelector-controls',
     			null, notices.PRIORITY_INFO_HIGH, [
@@ -839,51 +852,77 @@
 //    						try {
 //    							action_auto();
 //    						}
-//
 //    						catch (error) {
 //    							alert(error);
 //    						}
 //    						return true;
 //    					}
 //    				},
+//    				{
+//    					label:		getString("selectall"),
+//    					accessKey:	"A",
+//    					callback:	function() {
+//    						try {
+//    							action_maximize();
+//    						}
+//    						catch (error) {
+//    							Application.console.log("ssSelector.js::869 " + error);
+//    						}
+//
+//    						return true;
+//    					}
+//    				},
+//    				{
+//    					label:		getString("finish"),
+//    					accessKey:	"O",
+//    					callback:	function() {
+//    						try {
+//    							action_save();
+//    						}
+//    						catch (error) {
+//    							alert(getString("outOfMemory"));
+//    						}
+//    						return true;
+//    					}
+//    				}
     				{
-    					label:		getString("selectall"),
-    					accessKey:	"A",
+					label:		getString("know"),
+					accessKey:	"K",
     					callback:	function() {
     						try {
-    							action_maximize();
-    						}
-
+							action_know();
+						}
     						catch (error) {
-    							Application.console.log("ssSelector.js::858 " + error);
-    						}
-
-    						return true;
-    					}
-    				},
-    				{
-    					label:		getString("finish"),
-    					accessKey:	"O",
-    					callback:	function() {
-    						try {
-    							action_save();
-    						}
-    						catch (error) {
-    							alert(getString("outOfMemory"));
+							Application.console.log("ssSelector.js::896 " + error);
     						}
     						return true;
     					}
     				}
-    			]
+			]
     		);
     	};
 
-    	var notices = window.getNotificationBox(widget.window);
-    	var filename = (widget.document.title ? widget.document.title : widget.document.URL);
-    	var notice = append_notice();
-    	var notice_allow_close = true;
+	var showNotification = true;
+	var prefs = Components.classes['@mozilla.org/preferences-service;1']
+				    .getService(Components.interfaces.nsIPrefService)
+				    .getBranch('snapshot.settings.');
+	try {
+	    showNotification = prefs.getBoolPref('notification');
+	} catch (ex) {
+	    prefs.setBoolPref('notification', true);
+	}
+	var notices = null;
+	var notice = null;
+	if (showNotification) {
+	    notices = window.getNotificationBox(widget.window);
+	    // var filename = (widget.document.title ? widget.document.title : widget.document.URL);
+	    notice = append_notice();
+	    // var notice_allow_close = true;
+	}
 
-    	event_connect(notice, 'command', action_close);
+	if (notice) {
+	    event_connect(notice, 'command', action_close);
+	}
     	event_connect(widget.window, 'unload', action_close);
     	event_connect(widget.window, 'keydown', action_keydown);
     };

@@ -40,7 +40,7 @@ var CropOverlay = {
         isNew: false,
     },
     _dblclick: function(evt) {
-        Editor.current = {textContent: 'Crop'};
+        Editor.current = {id: 'crop'};
     },
     _display: function(x, y, w, h, ix, iy, iw, ih) {
         this._displayItem(this._overlay.overlay, x, y, w, h);
