@@ -2,6 +2,7 @@ window.ssInstalled = true;
 (function() {
 
 Components.utils.import("resource://easyscreenshot/snapshot.js");
+
 var Utils = {
     parse: function(element) {
         return {
@@ -1004,31 +1005,53 @@ var Editor = {
         var { classes: Cc, interfaces: Ci } = Components;
         var _strings = Cc["@mozilla.org/intl/stringbundle;1"].getService(Ci.nsIStringBundleService).createBundle("chrome://easyscreenshot/locale/easyscreenshot.properties");
 
-        var fp = Cc['@mozilla.org/filepicker;1'].createInstance(Ci.nsIFilePicker);
-        fp.init(window.parent, _strings.GetStringFromName('saveImageTo'), Ci.nsIFilePicker.modeSave);
-        fp.defaultString = _strings.GetStringFromName('SnapFilePrefix') + '_' + (new Date()).toISOString().replace(/:/g, '-') + '.png';
-        fp.appendFilter(_strings.GetStringFromName('pngImage'), '*.png');
-
-        if (fp.show() != Ci.nsIFilePicker.returnCancel) {
-            var file = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile);
-            var path = fp.file.path;
-            file.initWithPath(path + (/\.png$/.test(path) ? '' : '.png'));
-
-            var ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
-            var source = ios.newURI(this.canvas.toDataURL("image/png", ""), 'utf8', null);
-            var target = ios.newFileURI(file);
-
-            var persist = Cc['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Ci.nsIWebBrowserPersist);
-            persist.persistFlags = Ci.nsIWebBrowserPersist.PERSIST_FLAGS_AUTODETECT_APPLY_CONVERSION;
-
-            var transfer = Cc['@mozilla.org/transfer;1'].createInstance(Ci.nsITransfer);
-            transfer.init(source, target, '', null, null, null, persist, false);
-            persist.progressListener = transfer;
-
-            persist.saveURI(source, null, null, null, null, file, null);
-            this._history = [];
-            window.close();
+        var path = '';
+        var prefs = Cc['@mozilla.org/preferences-service;1']
+                        .getService(Components.interfaces.nsIPrefService)
+                        .getBranch('snapshot.settings.');
+        try {
+            path = prefs.getCharPref('saveposition');
+        } catch (ex) {
+            path = Cc["@mozilla.org/file/directory_service;1"]
+                    .getService(Components.interfaces.nsIProperties)
+                    .get("Desk", Ci.nsILocalFile).path;
+            prefs.setCharPref('saveposition', path);
         }
+
+        var file = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile);
+        file.initWithPath(path);
+        var defaultFilename = _strings.GetStringFromName('SnapFilePrefix') + '_' + (new Date()).toISOString().replace(/:/g, '-') + '.png';
+        file.append(defaultFilename);
+
+        var ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
+        var source = ios.newURI(this.canvas.toDataURL("image/png", ""), 'utf8', null);
+        var target = ios.newFileURI(file);
+
+        var persist = Cc['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Ci.nsIWebBrowserPersist);
+        persist.persistFlags = Ci.nsIWebBrowserPersist.PERSIST_FLAGS_AUTODETECT_APPLY_CONVERSION;
+
+        var transfer = Cc['@mozilla.org/transfer;1'].createInstance(Ci.nsITransfer);
+        transfer.init(source, target, '', null, null, null, persist, false);
+        persist.progressListener = transfer;
+
+        persist.saveURI(source, null, null, null, null, file, null);
+        this._history = [];
+
+        var openDirectory = false;
+        try {
+            openDirectory = prefs.getBoolPref('opendirectory');
+        } catch (ex) {
+            prefs.setBoolPref('opendirectory', false);
+        }
+        if (openDirectory) {
+            try {
+              file.reveal();
+            } catch (ex) {
+              file.parent.launch();
+            }
+        }
+
+        window.close();
     },
     _copyToClipboard: function() {
         var imagedata = this.canvas.toDataURL("image/png", "");

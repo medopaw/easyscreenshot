@@ -10,7 +10,7 @@
 <prefwindow xmlns:html="http://www.w3.org/1999/xhtml"
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   
-  <script type="application/x-javascript" src="settings-dialog.js"/>
+  <script type="application/x-javascript" src="chrome://easyscreenshot/content/settings-dialog.js"/>
 
   <prefpane id="settings" label="&easyscreenshot.settings.dialogtitle;">
     <preferences>

@@ -70,6 +70,9 @@ var settings = {
 
   _init: function() {
     let saveDirPref = document.getElementById("pref-saveposition");
+    if (!saveDirPref.value) {
+      saveDirPref.value = this._getDownloadsFolder("Desktop");
+    }
     this._setSaveDirElem(saveDirPref.value);
   },
   
