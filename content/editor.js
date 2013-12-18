@@ -1073,6 +1073,8 @@ var Editor = {
         var clipid = Components.interfaces.nsIClipboard;
         var clip = Components.classes["@mozilla.org/widget/clipboard;1"].getService(clipid);
         clip.setData(trans, null, clipid.kGlobalClipboard);
+
+        window.close();
     },
     _cancelAndClose: function() {
         window.close();
