@@ -314,3 +314,7 @@ body {
   top: 42px;
   z-index: 3;
 }
+
+#sound {
+  display: none;
+}

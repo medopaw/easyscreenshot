@@ -1051,6 +1051,7 @@ var Editor = {
             }
         }
 
+        Utils.qs('#sound').play();
         window.close();
     },
     _copyToClipboard: function() {
@@ -1074,6 +1075,7 @@ var Editor = {
         var clip = Components.classes["@mozilla.org/widget/clipboard;1"].getService(clipid);
         clip.setData(trans, null, clipid.kGlobalClipboard);
 
+        Utils.qs('#sound').play();
         window.close();
     },
     _cancelAndClose: function() {
