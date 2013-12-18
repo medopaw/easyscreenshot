@@ -806,6 +806,7 @@
 		}
     		event_release(widget.window, 'unload', action_close);
     		event_release(widget.window, 'keydown', action_keydown);
+		event_release(widget.selection, 'dblclick', action_save);
 
     		widget.root.removeChild(styles);
     		widget.root.removeChild(widget.overlay);
@@ -925,5 +926,6 @@
 	}
     	event_connect(widget.window, 'unload', action_close);
     	event_connect(widget.window, 'keydown', action_keydown);
+	event_connect(widget.selection, 'dblclick', action_save);
     };
 })();
