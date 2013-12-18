@@ -788,10 +788,9 @@ var Editor = {
                 self.panels[Editor._getID(li)].init();
             });
         },
-        reposition: function() {console.log('reposition');
+        reposition: function() {
             if (this.buttonEle) {
                 this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
-                console.log(this.ele.style.left);
             }
         },
         show: function(button, panelsToShow) {
@@ -890,7 +889,14 @@ var Editor = {
     _setupToolbar: function() {
         var self = this;
         [].forEach.call(document.querySelectorAll('#toolbar > li'), function(li) {
-            // li.firstChild.style.display = 'none';
+            var isControl = !!self._controls[self._getID(li)];
+            if (!isControl) {
+                li.addEventListener('mousedown', function(evt) {
+                    this.classList.add('current');
+                    self.pressedBtn = this;
+                    evt.stopPropagation();
+                }, false);
+            }
             li.addEventListener('click', function(evt) {
                 self.current = evt.target;
                 evt.stopPropagation();
@@ -1067,6 +1073,13 @@ window.addEventListener('beforeunload', function(evt) {
 */
 window.addEventListener('resize', function(evt) {
     Editor.floatbar.reposition();
+}, false);
+
+window.addEventListener('mouseup', function(evt) {
+    if (Editor.pressedBtn) {
+        Editor.pressedBtn.classList.remove('current');
+        Editor.pressedBtn = null;
+    }
 }, false);
 
 })();
