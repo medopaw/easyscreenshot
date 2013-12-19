@@ -447,8 +447,8 @@ var TextInput = {
     _listeners: {},
     _origRect: null,
     _size: {
-        width: 50,
-        height: 25
+        width: Math.ceil(BaseControl.fontSize * 2.4),
+        height: Math.ceil(BaseControl.fontSize * 1.2)
     },
     _blur: function() {
         var msg = this._input.value;
@@ -466,6 +466,7 @@ var TextInput = {
         this._input.blur();
         Editor.ctx.fillStyle = Color.selected;
         Editor.ctx.save();
+        this._input.style.fontSize = BaseControl.fontSize + 'px';
         this._input.style.left = evt.pageX + 'px';
         this._input.style.top = Math.min(Math.max(evt.pageY - 7, this._origRect[1]), this._origRect[1] + this._origRect[3] - 20) + 'px';
         // The magic number 10 and 5 is to leave some minimal space between text input and the page edge
@@ -487,7 +488,7 @@ var TextInput = {
         this._input.style.maxWidth = maxWidth + 'px';
         this._input.style.maxHeight = maxHeight + 'px';
         this._input.style.color = Color.selected;
-        this._input.style.borderColor = Color.selected;
+        this._input.style.borderColor = Color.hex2rgba(Color.selected, 0.5);
         this._input.style.display = '';
         this._input.focus();
     },
@@ -697,6 +698,16 @@ var Color = {
             document.removeEventListener('click', this._listeners.click, false);
             Editor.floatbar.panels.color.setBackgroundImage({ pressed: -1 });
         }
+    },
+    hex2rgba: function(hex, alpha) {
+        if (/^#/.test(hex) && hex.length == 7 && alpha !== undefined) {
+            return 'rgba('
+                + parseInt(hex.slice(1, 3), 16) + ','
+                + parseInt(hex.slice(3, 5), 16) + ','
+                + parseInt(hex.slice(5, 7), 16) + ','
+                + alpha + ')';
+        }
+        return hex;
     }
 }
 const HISTORY_LENGHT_MAX = 50;

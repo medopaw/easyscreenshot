@@ -303,7 +303,7 @@ body {
   padding: 1px;
   background: transparent;
   border: 1px dashed;
-  font: bold 14px Arial,Helvetica,sans-serif;
+  font: 14px Arial,Helvetica,sans-serif;
   overflow: hidden;
   z-index: 1;
   resize: none;
