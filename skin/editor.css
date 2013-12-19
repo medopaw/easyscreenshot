@@ -29,19 +29,14 @@ body {
 }
 
 #toolbar > li:not(:last-of-type) {
-  margin: 0 -3px 0 -3px;
+  margin: 0 -2px 0 -1px;
   padding: 7px 30px 8px 30px;
-  border-left: 1px solid #1d2028;
+  outline: 1px solid #1d2028;
   background-image: url(chrome://easyscreenshot/skin/image/icons.png),
                     url(chrome://easyscreenshot/skin/image/button-normal.png);
   background-origin: content-box, border-box;
   background-clip: content-box, border-box;
   background-repeat: no-repeat, no-repeat;
-}
-
-#toolbar >li:nth-last-of-type(2) {
-  padding-right: 28px;
-  border-right: 1px solid #1d2028;
 }
 
 #toolbar > li:last-of-type {
@@ -68,7 +63,7 @@ body {
 }
 
 #button-crop:hover {
-  background-position: -20px -20px, 0 0;
+  background-position: -20px 0px, 0 0;
 }
 
 #button-crop.current {
@@ -80,7 +75,7 @@ body {
 }
 
 #button-rectangle:hover {
-  background-position: -40px -20px, 0 0;
+  background-position: -40px 0px, 0 0;
 }
 
 #button-rectangle.current {
@@ -92,7 +87,7 @@ body {
 }
 
 #button-circle:hover {
-  background-position: -60px -20px, 0 0;
+  background-position: -60px 0px, 0 0;
 }
 
 #button-circle.current {
@@ -104,7 +99,7 @@ body {
 }
 
 #button-line:hover {
-  background-position: -80px -20px, 0 0;
+  background-position: -80px 0px, 0 0;
 }
 
 #button-line.current {
@@ -116,7 +111,7 @@ body {
 }
 
 #button-pencil:hover {
-  background-position: -100px -20px, 0 0;
+  background-position: -100px 0px, 0 0;
 }
 
 #button-pencil.current {
@@ -128,7 +123,7 @@ body {
 }
 
 #button-text:hover {
-  background-position: -120px -20px, 0 0;
+  background-position: -120px 0px, 0 0;
 }
 
 #button-text.current {
@@ -140,7 +135,7 @@ body {
 }
 
 #button-blur:hover {
-  background-position: -140px -20px, 0 0;
+  background-position: -140px 0px, 0 0;
 }
 
 #button-blur.current {
@@ -152,7 +147,7 @@ body {
 }
 
 #button-undo:hover {
-  background-position: -160px -20px, 0 0;
+  background-position: -160px 0px, 0 0;
 }
 
 #button-local {
@@ -160,7 +155,7 @@ body {
 }
 
 #button-local:hover {
-  background-position: -180px -20px, 0 0;
+  background-position: -180px 0px, 0 0;
 }
 
 #button-copy {
@@ -168,7 +163,7 @@ body {
 }
 
 #button-copy:hover {
-  background-position: -200px -20px, 0 0;
+  background-position: -200px 0px, 0 0;
 }
 
 #button-cancel {
@@ -176,7 +171,7 @@ body {
 }
 
 #button-cancel:hover {
-  background-position: 0 -20px;
+  background-position: 0 0px;
 }
 
 #floatbar {
@@ -299,11 +294,19 @@ body {
 }
 
 #textinput {
+  width: 200px;
+  height: 100px;
+  min-width: 200px;
+  min-height: 100px;
+  max-width: 400px;
+  max-height: 200px;
+  padding: 1px;
   background: transparent;
-  border: none;
-  border-bottom: 1px dashed red;
-  font: bold 14px/18px Arial,Helvetica,sans-serif;
+  border: 1px dashed;
+  font: bold 14px Arial,Helvetica,sans-serif;
+  overflow: hidden;
   z-index: 1;
+  resize: none;
 }
 
 #colorpicker {

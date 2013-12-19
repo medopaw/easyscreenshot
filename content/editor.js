@@ -446,6 +446,10 @@ var TextInput = {
     _input: null,
     _listeners: {},
     _origRect: null,
+    _size: {
+        width: 50,
+        height: 25
+    },
     _blur: function() {
         var msg = this._input.value;
         this._input.value = '';
@@ -464,9 +468,26 @@ var TextInput = {
         Editor.ctx.save();
         this._input.style.left = evt.pageX + 'px';
         this._input.style.top = Math.min(Math.max(evt.pageY - 7, this._origRect[1]), this._origRect[1] + this._origRect[3] - 20) + 'px';
-        this._input.style.width = Math.min(184, this._origRect[0] + this._origRect[2] - evt.pageX) + 'px';
+        // The magic number 10 and 5 is to leave some minimal space between text input and the page edge
+        var maxWidth = this._origRect[0] + this._origRect[2] - evt.pageX - 10;
+        var maxHeight = this._origRect[1] + this._origRect[3] - evt.pageY - 5;
+        // If too close to the page edge, don't show text input
+        if (maxWidth <= 0 || maxHeight <= 0) {
+            this._hide();
+            return;
+        }
+        var initialWidth = Math.min(this._size.width, maxWidth);
+        var initialHeight = Math.min(this._size.height, maxHeight);
+        this._size.minWidth = initialWidth;
+        this._size.minHeight = initialHeight;
+        this._input.style.width = initialWidth + 'px';
+        this._input.style.height = initialHeight + 'px';
+        this._input.style.minWidth = initialWidth + 'px';
+        this._input.style.minHeight = initialHeight + 'px';
+        this._input.style.maxWidth = maxWidth + 'px';
+        this._input.style.maxHeight = maxHeight + 'px';
         this._input.style.color = Color.selected;
-        this._input.style.borderBottomColor = Color.selected;
+        this._input.style.borderColor = Color.selected;
         this._input.style.display = '';
         this._input.focus();
     },
@@ -474,11 +495,25 @@ var TextInput = {
         this._input.style.display = 'none';
     },
     init: function() {
+        var self = this;
         this._input = Utils.qs('#textinput');
         this._hide();
         this._listeners['blur'] = this._blur.bind(this);
         this._listeners['click'] = this._click.bind(this);
         this._input.addEventListener('blur', this._listeners.blur, false);
+        this._input.wrap = 'off';
+        // Auto resize according to content
+        this._input.addEventListener('input', function(evt) {
+            this.style.width = self._size.minWidth + 'px';
+            this.style.width = this.scrollWidth + 'px';
+            this.style.height = self._size.minHeight + 'px';
+            this.style.height = this.scrollHeight + 'px';
+        }, false);
+        // Disallow scroll. Make sure content on screen doesn't scroll away.
+        this._input.addEventListener('scroll',function(evt) {
+            this.scrollTop = 0;
+            this.scrollLeft = 0;
+        });
     },
     start: function(x, y, w, h) {
         this.__proto__.start.bind(this)(x, y, w, h, 'textcanvas', 'click');
@@ -927,7 +962,7 @@ var Editor = {
         // Define floatbar types to avoid repetition
         var floatbars = {
             line: ['linewidth', 'color'],
-            text: ['fontsize', 'color']
+            text: [/*'fontsize',*/ 'color']
         };
         // Define button structure
         var Button = function(options) {
