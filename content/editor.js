@@ -30,7 +30,10 @@ var Utils = {
                 mergeTo[key] = mergeFrom[key];
             });
         }
-    }
+    },
+    prefs: Components.classes['@mozilla.org/preferences-service;1']
+                        .getService(Components.interfaces.nsIPrefService)
+                        .getBranch('snapshot.settings.')
 };
 var CropOverlay = {
     _listeners: {},
@@ -280,11 +283,8 @@ var BaseControl = {
     get lineWidth() {
         var _lineWidth = this._lineWidth;
         if (!_lineWidth.value) {
-            var prefs = Components.classes['@mozilla.org/preferences-service;1']
-                                        .getService(Components.interfaces.nsIPrefService)
-                                        .getBranch('snapshot.settings.');
             try {
-                _lineWidth.value = prefs.getIntPref('lineWidth');
+                _lineWidth.value = Utils.prefs.getIntPref('lineWidth');
             } catch (ex) {
                 // lineWidth not set in preference. Trigger set function.
                 this.lineWidthLevel = 1;
@@ -299,22 +299,46 @@ var BaseControl = {
         }
         if (!isNaN(value) && _lineWidth.value != value) {
             _lineWidth.value = value;
-            var prefs = Components.classes['@mozilla.org/preferences-service;1']
-                                        .getService(Components.interfaces.nsIPrefService)
-                                        .getBranch('snapshot.settings.');
-            prefs.setIntPref('lineWidth', value);
+            Utils.prefs.setIntPref('lineWidth', value);
         }
     },
     get lineWidthLevel() {
-    	return this._lineWidth.levels.indexOf(this.lineWidth);
+        return this._lineWidth.levels.indexOf(this.lineWidth);
     },
     set lineWidthLevel(value) {
-    	this.lineWidth = this._lineWidth.levels[value];
+        this.lineWidth = this._lineWidth.levels[value];
     },
-    _fontSize: null,
+    _fontSize: {
+        value: 0,
+        levels: [9, 10, 11, 12, 13, 14, 18, 24, 36, 48, 64, 72, 96]
+    },
     get fontSize() {
+        var _fontSize = this._fontSize;
+        if (!_fontSize.value) {
+            try {
+                _fontSize.value = Utils.prefs.getIntPref('fontSize');
+            } catch (ex) {
+                // fontSize not set in preference. Trigger set function.
+                this.fontSizeLevel = 6; // 18pt
+            }
+        }
+        return _fontSize.value;
     },
-    set fontSize(fontSize) {
+    set fontSize(value) {
+        var _fontSize = this._fontSize;
+        if (typeof value == 'string') {
+            value = _fontSize.level[value];
+        }
+        if (!isNaN(value) && _fontSize.value != value) {
+            _fontSize.value = value;
+            Utils.prefs.setIntPref('fontSize', value);
+        }
+    },
+    get fontSizeLevel() {
+        return this._fontSize.levels.indexOf(this.fontSize);
+    },
+    set fontSizeLevel(value) {
+        this.fontSize = this._fontSize.levels[value];
     },
     init: function() {
         this._listeners['mousedown'] = this._mousedown.bind(this);
@@ -593,11 +617,8 @@ var Color = {
     _usePrefix: false,
     get selected() {
         if (!this._selected) {
-            var prefs = Components.classes['@mozilla.org/preferences-service;1']
-                                        .getService(Components.interfaces.nsIPrefService)
-                                        .getBranch('snapshot.settings.');
             try {
-                this._selected = prefs.getCharPref('color');
+                this._selected = Utils.prefs.getCharPref('color');
             } catch (ex) {
                 // color not set in preference. Trigger set function.
                 this.selected = '#FF0000';
@@ -608,14 +629,9 @@ var Color = {
     set selected(value) {
         if (this._selected != value) {
             this._selected = value;
-
             Editor.floatbar.panels.color.setColor(value);
-
-            var prefs = Components.classes['@mozilla.org/preferences-service;1']
-                                        .getService(Components.interfaces.nsIPrefService)
-                                        .getBranch('snapshot.settings.');
-            prefs.setCharPref('color', value);
-	    }
+            Utils.prefs.setCharPref('color', value);
+        }
     },
     _click: function(evt) {
         this.toggle();
@@ -873,6 +889,7 @@ var Editor = {
         [CropOverlay, Rect, Line, Pencil, Circ, TextInput, Blur, Color].forEach(function(control) {
             control.init();
         });
+        this.playSound('capture');
     },
     updateHistory: function() {
         this._history.push(this.canvasData);
@@ -1006,16 +1023,13 @@ var Editor = {
         var _strings = Cc["@mozilla.org/intl/stringbundle;1"].getService(Ci.nsIStringBundleService).createBundle("chrome://easyscreenshot/locale/easyscreenshot.properties");
 
         var path = '';
-        var prefs = Cc['@mozilla.org/preferences-service;1']
-                        .getService(Components.interfaces.nsIPrefService)
-                        .getBranch('snapshot.settings.');
         try {
-            path = prefs.getCharPref('saveposition');
+            path = Utils.prefs.getCharPref('saveposition');
         } catch (ex) {
             path = Cc["@mozilla.org/file/directory_service;1"]
                     .getService(Components.interfaces.nsIProperties)
                     .get("Desk", Ci.nsILocalFile).path;
-            prefs.setCharPref('saveposition', path);
+            Utils.prefs.setCharPref('saveposition', path);
         }
 
         var file = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile);
@@ -1039,9 +1053,9 @@ var Editor = {
 
         var openDirectory = false;
         try {
-            openDirectory = prefs.getBoolPref('opendirectory');
+            openDirectory = Utils.prefs.getBoolPref('opendirectory');
         } catch (ex) {
-            prefs.setBoolPref('opendirectory', false);
+            Utils.prefs.setBoolPref('opendirectory', false);
         }
         if (openDirectory) {
             try {
@@ -1051,7 +1065,7 @@ var Editor = {
             }
         }
 
-        Utils.qs('#sound').play();
+        this.playSound('export');
         window.close();
     },
     _copyToClipboard: function() {
@@ -1075,7 +1089,7 @@ var Editor = {
         var clip = Components.classes["@mozilla.org/widget/clipboard;1"].getService(clipid);
         clip.setData(trans, null, clipid.kGlobalClipboard);
 
-        Utils.qs('#sound').play();
+        this.playSound('export');
         window.close();
     },
     _cancelAndClose: function() {
@@ -1087,6 +1101,9 @@ var Editor = {
         }
         window.close();
     },
+    playSound: function(sound) {
+        Utils.qs('#sound-' + sound).play();
+    }
 };
 window.addEventListener('load', function(evt) {
     Editor.init();

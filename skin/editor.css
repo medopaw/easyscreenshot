@@ -315,6 +315,6 @@ body {
   z-index: 3;
 }
 
-#sound {
+.sound {
   display: none;
 }
