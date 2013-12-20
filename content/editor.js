@@ -450,45 +450,65 @@ var TextInput = {
         width: Math.ceil(BaseControl.fontSize * 2.4),
         height: Math.ceil(BaseControl.fontSize * 1.2)
     },
+    _refreshImageData: function() {
+        var textRect = this._input.getBoundingClientRect();
+        var x = textRect.left + 1;
+        var y = textRect.top + 1;
+        var w = textRect.width - 2;
+        var h = textRect.height - 2;
+
+        this._canvas.width = w;
+        this._canvas.height = h;
+        this._ctx.drawWindow(window.content, x + window.scrollX, y + window.scrollY, w, h, "rgb(255,255,255)");
+
+        var canvasRect = Editor.canvas.getBoundingClientRect();
+        Editor.ctx.putImageData(this._ctx.getImageData(0, 0, w, h), x - canvasRect.left, y - canvasRect.top);
+    },
     _blur: function() {
-        var msg = this._input.value;
-        this._input.value = '';
-        var x = parseInt(this._input.style.left, 10) - this._origRect[0];
-        var y = parseInt(this._input.style.top, 10) - this._origRect[1];
-        if (msg) {
-            Editor.ctx.font = 'bold 14px Arial,Helvetica,sans-serif';
-            // why the offset ? baseline ?
-            Editor.ctx.fillText(msg, x + 1, y + 14 + 1);
+        if (!/^\s*$/.test(this._input.value)) {
+            this._refreshImageData();
+            this._input.value = '';
             Editor.updateHistory();
         }
     },
     _click: function(evt) {
         this._input.blur();
-        Editor.ctx.fillStyle = Color.selected;
-        Editor.ctx.save();
         this._input.style.fontSize = BaseControl.fontSize + 'px';
         this._input.style.left = evt.pageX + 'px';
         this._input.style.top = Math.min(Math.max(evt.pageY - 7, this._origRect[1]), this._origRect[1] + this._origRect[3] - 20) + 'px';
-        // The magic number 10 and 5 is to leave some minimal space between text input and the page edge
+
+        // The magic number 10 and 5 is to leave some minimal space between text input and page edge
         var maxWidth = this._origRect[0] + this._origRect[2] - evt.pageX - 10;
         var maxHeight = this._origRect[1] + this._origRect[3] - evt.pageY - 5;
-        // If too close to the page edge, don't show text input
+        // Don't show text input if too close to page edge
         if (maxWidth <= 0 || maxHeight <= 0) {
             this._hide();
             return;
         }
+
+        // Text input cannot bypass page edge
         var initialWidth = Math.min(this._size.width, maxWidth);
         var initialHeight = Math.min(this._size.height, maxHeight);
+
+        // Initial size is minimal size. Cannot be smaller than this.
         this._size.minWidth = initialWidth;
         this._size.minHeight = initialHeight;
         this._input.style.width = initialWidth + 'px';
         this._input.style.height = initialHeight + 'px';
+
+        // Set minimal size
         this._input.style.minWidth = initialWidth + 'px';
         this._input.style.minHeight = initialHeight + 'px';
+
+        // Set maximal size
         this._input.style.maxWidth = maxWidth + 'px';
         this._input.style.maxHeight = maxHeight + 'px';
+
+        // Set text color and transparent border
         this._input.style.color = Color.selected;
         this._input.style.borderColor = Color.hex2rgba(Color.selected, 0.5);
+
+        // Show and focus on the text input
         this._input.style.display = '';
         this._input.focus();
     },
@@ -505,8 +525,10 @@ var TextInput = {
         this._input.wrap = 'off';
         // Auto resize according to content
         this._input.addEventListener('input', function(evt) {
+            // Always shrink to minimal size first
             this.style.width = self._size.minWidth + 'px';
             this.style.width = this.scrollWidth + 'px';
+            // And then extend to scroll size
             this.style.height = self._size.minHeight + 'px';
             this.style.height = this.scrollHeight + 'px';
         }, false);
