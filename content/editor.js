@@ -470,6 +470,7 @@ var TextInput = {
     _blur: function() {
         if (!/^\s*$/.test(this._input.value)) {
             this._refreshImageData();
+            this._hide();
             this._input.value = '';
             Editor.updateHistory();
         }
@@ -938,7 +939,12 @@ var Editor = {
     },
     init: function() {
         this.canvas = Utils.qs('#display');
-        this.canvasData = SnapshotStorage.pop();
+        try {
+            this.canvasData = SnapshotStorage.pop();
+        } catch(ex) {
+            window.location.href = "http://mozilla.com.cn/addon/325-easyscreenshot/";
+            return;
+        }
         this.updateHistory();
         this._disableUndo();
         this._setupToolbar();
