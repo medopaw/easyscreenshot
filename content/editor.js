@@ -170,6 +170,9 @@ var CropOverlay = {
         this._listeners['mouseup'] = this._mouseup.bind(this);
         this._hide();
     },
+    reposition: function() {
+        this._overlay.overlay.style.left = Editor.canvas.getBoundingClientRect().left + 'px';
+    },
     start: function(x, y, w, h) {
         this._display(x, y, w, h, 0, 0, 0, 0);
         this._overlay.overlay.addEventListener('dblclick', this._listeners.dblclick, false);
@@ -721,6 +724,11 @@ var Color = {
             Editor.floatbar.panels.color.setBackgroundImage({ pressed: -1 });
         }
     },
+    reposition: function() {
+        var rect = Editor.floatbar.panels.color.ele.getBoundingClientRect();
+        this._colorpicker.style.top = rect.bottom + 3 + 'px';
+        this._colorpicker.style.left = rect.left + 'px';
+    },
     hex2rgba: function(hex, alpha) {
         if (/^#/.test(hex) && hex.length == 7 && alpha !== undefined) {
             return 'rgba('
@@ -846,10 +854,7 @@ var Editor = {
                             }
                             case 'color': {
                                 panel.pressed = panel.pressed < 0 ? 0 : -1;
-                                var rect = panel.ele.getBoundingClientRect();
-                                var picker = Color._colorpicker;
-                                picker.style.top = rect.bottom + 3 + 'px';
-                                picker.style.left = rect.left + 'px';
+                                Color.reposition();
                                 Color.toggle();
                                 break;
                             }
@@ -877,6 +882,7 @@ var Editor = {
             if (this.buttonEle) {
                 this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
             }
+            Color.reposition();
         },
         show: function(button, panelsToShow) {
             this.buttonEle = button;
@@ -1185,6 +1191,7 @@ window.addEventListener('beforeunload', function(evt) {
 */
 window.addEventListener('resize', function(evt) {
     Editor.floatbar.reposition();
+    CropOverlay.reposition();
 }, false);
 
 window.addEventListener('mouseup', function(evt) {
