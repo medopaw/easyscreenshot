@@ -1185,16 +1185,11 @@ var Editor = {
         Utils.qs('#sound-' + sound).play();
     }
 };
+
 window.addEventListener('load', function(evt) {
     Editor.init();
 }, false);
-/*
-window.addEventListener('beforeunload', function(evt) {
-    if (Editor._history.length > 1) {
-        evt.preventDefault();
-    }
-}, false);
-*/
+
 window.addEventListener('resize', function(evt) {
     Editor.floatbar.reposition();
     CropOverlay.reposition();
