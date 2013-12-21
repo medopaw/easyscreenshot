@@ -1,7 +1,9 @@
 window.ssInstalled = true;
+const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+
 (function() {
 
-Components.utils.import("resource://easyscreenshot/snapshot.js");
+Cu.import("resource://easyscreenshot/snapshot.js");
 
 var Utils = {
     parse: function(element) {
@@ -21,6 +23,9 @@ var Utils = {
             return [].some.call(node.children, function(n) n == otherNode);
         }
     },
+    isFunction: function(a) {
+        return typeof a == 'function';
+    },
     merge: function(mergeTo, mergeFrom) {
         var allObject = [mergeTo, mergeFrom].every(function(value) {
             return typeof value == 'object';
@@ -31,8 +36,121 @@ var Utils = {
             });
         }
     },
-    prefs: Components.classes['@mozilla.org/preferences-service;1']
-                        .getService(Components.interfaces.nsIPrefService)
+    download: function(url, path, onsuccess, onerror, oncancel) {
+        var jsm = {};
+        try {
+            Cu.import('resource://gre/modules/Downloads.jsm', jsm);
+        } catch(ex) {}
+
+        if (jsm.Downloads && jsm.Downloads.getList) {
+            jsm.Downloads.getList(jsm.Downloads.ALL).then(function(aDownloadList) {
+                jsm.Downloads.createDownload({
+                    source: url,
+                    target: path,
+                    launchWhenSucceeded: false
+                }).then(function(aDownload) {
+                    aDownloadList.add(aDownload);
+                    aDownload.start().then(function() {
+                        if (aDownload.succeeded && Utils.isFunction(onsuccess)) {
+                            onsuccess(aDownload);
+                        }
+                    }, function() {
+                        if (aDownload.error && Utils.isFunction(onerror)) {
+                            onerror(aDownload);
+                        } else if (aDownload.canceled && Utils.isFunction(oncancel)) {
+                            oncancel(aDownload);
+                        }
+                    }).then(null, Cu.reportError);
+                }).then(null, Cu.reportError);
+            });
+        } else {
+            var ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
+            var source = ios.newURI(url, 'utf8', null);
+            var file = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile);
+            file.initWithPath(path);
+            var target = ios.newFileURI(file);
+
+            var persist = Cc["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"].
+                            createInstance(Ci.nsIWebBrowserPersist);
+            persist.persistFlags = Ci.nsIWebBrowserPersist.PERSIST_FLAGS_REPLACE_EXISTING_FILES
+                                 | Ci.nsIWebBrowserPersist.PERSIST_FLAGS_AUTODETECT_APPLY_CONVERSION;
+
+            var downloadManager = Cc['@mozilla.org/download-manager;1'].getService(Ci.nsIDownloadManager);
+            try{
+            var download = downloadManager.addDownload(Ci.nsIDownload.DOWNLOAD_TYPE_DOWNLOAD,
+                source, target, '', null, null, null, persist, null);
+            } catch (ex) {alert(ex);}
+            var downloadProgressListener = {
+                complete: [
+                    Ci.nsIDownloadManager.DOWNLOAD_FINISHED,
+                    Ci.nsIDownloadManager.DOWNLOAD_FAILED,
+                    Ci.nsIDownloadManager.DOWNLOAD_CANCELED,
+                    Ci.nsIDownloadManager.DOWNLOAD_BLOCKED_PARENTAL,
+                    Ci.nsIDownloadManager.DOWNLOAD_DIRTY,
+                    Ci.nsIDownloadManager.DOWNLOAD_BLOCKED_POLICY
+                ],
+                success: [
+                    Ci.nsIDownloadManager.DOWNLOAD_FINISHED
+                ],
+                error: [
+                    Ci.nsIDownloadManager.DOWNLOAD_FAILED,
+                    Ci.nsIDownloadManager.DOWNLOAD_BLOCKED_PARENTAL,
+                    Ci.nsIDownloadManager.DOWNLOAD_DIRTY,
+                    Ci.nsIDownloadManager.DOWNLOAD_BLOCKED_POLICY
+                ],
+                cancel: [
+                    Ci.nsIDownloadManager.DOWNLOAD_CANCELED,
+                    Ci.nsIDownloadManager.DOWNLOAD_PAUSED
+                ],
+                status: function(state) {
+                    var status = ['success', 'error', 'cancel'];
+                    var result = 'unknown';
+                    for (var i = 0; i < status.length; i++) {
+                        if (this[status[i]].indexOf(state) >= 0) {
+                            return status[i];
+                        }
+                    }
+                    return 'unknown';
+                },
+                onDownloadStateChange: function(a, aDownload) {
+                    if (aDownload.source.spec == source.spec
+                        && aDownload.targetFile.path == target.path
+                        && this.complete.indexOf(aDownload.state) >= 0) {
+                        downloadManager.removeListener(downloadProgressListener);
+                        switch (this.status(aDownload.state)) {
+                            case 'success': {
+                                if (Utils.isFunction(onsuccess)) {
+                                    onsuccess(aDownload);
+                                }
+                                break;
+                            }
+                            case 'error': {
+                                if (Utils.isFunction(onerror)) {
+                                    onerror(aDownload);
+                                }
+                                break;
+                            }
+                            case 'cancel': {
+                                if (Utils.isFunction(oncancel)) {
+                                    oncancel(aDownload);
+                                }
+                                break;
+                            }
+                            default: {
+                                break;
+                            }
+                        }
+                    }
+                }
+            };
+            downloadManager.addListener(downloadProgressListener);
+            persist.progressListener = download;
+
+            persist.saveURI(source, null, null, null, null, target, null);
+        }
+    },
+    prefs: Cc['@mozilla.org/preferences-service;1']
+                        .getService(Ci.nsIPrefService)
                         .getBranch('snapshot.settings.')
 };
 var CropOverlay = {
@@ -1099,74 +1217,60 @@ var Editor = {
         Utils.qs('#button-undo').setAttribute('disabled', 'true');
     },
     _saveLocal: function() {
-        var { classes: Cc, interfaces: Ci } = Components;
-        var _strings = Cc["@mozilla.org/intl/stringbundle;1"].getService(Ci.nsIStringBundleService).createBundle("chrome://easyscreenshot/locale/easyscreenshot.properties");
-
-        var path = '';
+        var savePosition = '';
         try {
-            path = Utils.prefs.getCharPref('saveposition');
+            savePosition = Utils.prefs.getCharPref('saveposition');
         } catch (ex) {
-            path = Cc["@mozilla.org/file/directory_service;1"]
-                    .getService(Components.interfaces.nsIProperties)
+            savePosition = Cc["@mozilla.org/file/directory_service;1"]
+                    .getService(Ci.nsIProperties)
                     .get("Desk", Ci.nsILocalFile).path;
-            Utils.prefs.setCharPref('saveposition', path);
+            Utils.prefs.setCharPref('saveposition', savePosition);
         }
 
         var file = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile);
-        file.initWithPath(path);
+        file.initWithPath(savePosition);
+        var _strings = Cc["@mozilla.org/intl/stringbundle;1"].getService(Ci.nsIStringBundleService).createBundle("chrome://easyscreenshot/locale/easyscreenshot.properties");
         var defaultFilename = _strings.GetStringFromName('SnapFilePrefix') + '_' + (new Date()).toISOString().replace(/:/g, '-') + '.png';
         file.append(defaultFilename);
 
-        var ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
-        var source = ios.newURI(this.canvas.toDataURL("image/png", ""), 'utf8', null);
-        var target = ios.newFileURI(file);
-
-        var persist = Cc['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Ci.nsIWebBrowserPersist);
-        persist.persistFlags = Ci.nsIWebBrowserPersist.PERSIST_FLAGS_AUTODETECT_APPLY_CONVERSION;
-
-        var transfer = Cc['@mozilla.org/transfer;1'].createInstance(Ci.nsITransfer);
-        transfer.init(source, target, '', null, null, null, persist, false);
-        persist.progressListener = transfer;
-
-        persist.saveURI(source, null, null, null, null, file, null);
-        this._history = [];
-
-        var openDirectory = false;
-        try {
-            openDirectory = Utils.prefs.getBoolPref('opendirectory');
-        } catch (ex) {
-            Utils.prefs.setBoolPref('opendirectory', false);
-        }
-        if (openDirectory) {
+        Utils.download(this.canvas.toDataURL('image/png', ''), file.path, function() {
+            var openDirectory = false;
             try {
-              file.reveal();
+                openDirectory = Utils.prefs.getBoolPref('opendirectory');
             } catch (ex) {
-              file.parent.launch();
+                Utils.prefs.setBoolPref('opendirectory', true);
             }
-        }
+            if (openDirectory) {
+                try {
+                  file.reveal();
+                } catch (ex) {
+                  file.parent.launch();
+                }
+            }
+        });
 
         this.playSound('export');
         window.close();
     },
     _copyToClipboard: function() {
         var imagedata = this.canvas.toDataURL("image/png", "");
-        var ios = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
+        var ios = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
         var channel = ios.newChannel(imagedata, null, null);
         var input = channel.open();
-        var imgTools = Components.classes["@mozilla.org/image/tools;1"].getService(Components.interfaces.imgITools);
+        var imgTools = Cc["@mozilla.org/image/tools;1"].getService(Ci.imgITools);
 
         var container = {};
         imgTools.decodeImageData(input, channel.contentType, container);
 
-        var wrapped = Components.classes["@mozilla.org/supports-interface-pointer;1"].createInstance(Components.interfaces.nsISupportsInterfacePointer);
+        var wrapped = Cc["@mozilla.org/supports-interface-pointer;1"].createInstance(Ci.nsISupportsInterfacePointer);
         wrapped.data = container.value;
 
-        var trans = Components.classes["@mozilla.org/widget/transferable;1"].createInstance(Components.interfaces.nsITransferable);
+        var trans = Cc["@mozilla.org/widget/transferable;1"].createInstance(Ci.nsITransferable);
         trans.addDataFlavor(channel.contentType);
         trans.setTransferData(channel.contentType, wrapped, channel.contentLength);
 
-        var clipid = Components.interfaces.nsIClipboard;
-        var clip = Components.classes["@mozilla.org/widget/clipboard;1"].getService(clipid);
+        var clipid = Ci.nsIClipboard;
+        var clip = Cc["@mozilla.org/widget/clipboard;1"].getService(clipid);
         clip.setData(trans, null, clipid.kGlobalClipboard);
 
         this.playSound('export');
