@@ -1069,20 +1069,24 @@ var Editor = {
         this.floatbar.init();
         var self = this;
         document.body.addEventListener('keypress', function(evt) {
-            if (evt.keyCode == 27) {//Esc
+            if (evt.keyCode == 27) { // Esc
                 self.current = null;
-            }
-            if (evt.ctrlKey && evt.charCode == 99) {//^C
-                self.current = {id: 'copy'};
-                evt.preventDefault();
-            }
-            if (evt.ctrlKey && evt.charCode == 115) {//^S
-                self.current = {id: 'local'};
-                evt.preventDefault();
-            }
-            if (evt.ctrlKey && evt.charCode == 122) {//^Z
-                self.current = {id: 'undo'};
-            }
+            }console.log(1);
+            if (self._getID(evt.target) == 'textinput') {
+                return;
+            }console.log(2);
+            Object.keys(self.buttons).some(function(id) {console.log(3);
+                var button = self.buttons[id];
+                var key = button.key;console.log(key);
+                return key ? [key.toLowerCase(), key.toUpperCase()].some(function(letter) {console.log(4);
+                    var found = evt.charCode == letter.charCodeAt(0);console.log(found);
+                    if (found) {
+                        self.current = {id: id};
+                        evt.preventDefault();
+                    }
+                    return found;
+                }) : false;
+            });
         }, false);
         [CropOverlay, Rect, Line, Pencil, Circ, TextInput, Blur, Color].forEach(function(control) {
             control.init();
@@ -1161,40 +1165,51 @@ var Editor = {
         // Generate buttons
         [{
             id: 'crop',
+            key: 'X',
             finish: function() {
                 self._controls.crop.stop();
             }
         }, {
             id: 'rectangle',
+            key: 'A',
             floatbar: floatbars.line
         }, {
             id: 'line',
+            key: 'E',
             floatbar: floatbars.line
         }, {
             id: 'pencil',
+            key: 'F',
             floatbar: floatbars.line
         }, {
             id: 'circle',
+            key: 'R',
             floatbar: floatbars.line
         }, {
             id: 'text',
+            key: 'T',
             floatbar: floatbars.text
         }, {
-            id: 'blur'
+            id: 'blur',
+            key: 'B'
         }, {
             id: 'undo',
+            key: 'Z',
             simple: true,
             start: self._undo.bind(self)
         }, {
             id: 'local',
+            key: 'S',
             simple: true,
             start: self._saveLocal.bind(self)
         }, {
             id: 'copy',
+            key: 'C',
             simple: true,
             start: self._copyToClipboard.bind(self)
         }, {
             id: 'cancel',
+            key: 'Q',
             simple: true,
             start: self._cancelAndClose.bind(self)
         }].forEach(function(options) {
