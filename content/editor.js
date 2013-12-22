@@ -149,9 +149,41 @@ var Utils = {
             persist.saveURI(source, null, null, null, null, target, null);
         }
     },
-    prefs: Cc['@mozilla.org/preferences-service;1']
+    prefs: {
+        _branch: Cc['@mozilla.org/preferences-service;1']
                         .getService(Ci.nsIPrefService)
-                        .getBranch('snapshot.settings.')
+                        .getBranch('snapshot.settings.'),
+        _type: function(value) {
+            return {
+                boolean: 'Bool',
+                number: 'Int',
+                string: 'Char'
+            }[typeof value];
+        },
+        get: function(name, defaultValue) {
+            var type = this._type(defaultValue);
+            var getter = 'get' + type + 'Pref';
+            var setter = 'set' + type + 'Pref';
+
+            var value;
+            try {
+                value = this._branch[getter](name);
+            } catch (ex) {
+                value = defaultValue;
+                this._branch[setter](name, value);
+            }
+            return value;
+        },
+        set: function(name, value) {
+            var type = this._type(value);
+            var setter = 'set' + type + 'Pref';
+
+            this._branch[setter](name, value);
+        },
+        observe: function(name, callback) {
+            this._branch.addObserver(name, {observe: callback}, false);
+        }
+    }
 };
 var CropOverlay = {
     _listeners: {},
@@ -289,7 +321,9 @@ var CropOverlay = {
         this._hide();
     },
     reposition: function() {
-        this._overlay.overlay.style.left = Editor.canvas.getBoundingClientRect().left + 'px';
+        if (this._overlay.overlay && Editor.canvas) {
+            this._overlay.overlay.style.left = Editor.canvas.getBoundingClientRect().left + 'px';
+        }
     },
     start: function(x, y, w, h) {
         this._display(x, y, w, h, 0, 0, 0, 0);
@@ -397,69 +431,35 @@ var BaseControl = {
     },
     _stroke: function(ctx, x, y, w, h) {
     },
-    _lineWidth: {
-        value: 0,
-        levels: [3, 6, 9]
-    },
+    _lineWidthLevels: [3, 6, 9],
     get lineWidth() {
-        var _lineWidth = this._lineWidth;
-        if (!_lineWidth.value) {
-            try {
-                _lineWidth.value = Utils.prefs.getIntPref('lineWidth');
-            } catch (ex) {
-                // lineWidth not set in preference. Trigger set function.
-                this.lineWidthLevel = 1;
-            }
-        }
-        return _lineWidth.value;
+        return Utils.prefs.get('lineWidth', this._lineWidthLevels[1]);
     },
     set lineWidth(value) {
-        var _lineWidth = this._lineWidth;
-        if (typeof value == 'string') {
-            value = _lineWidth.level[value];
-        }
-        if (!isNaN(value) && _lineWidth.value != value) {
-            _lineWidth.value = value;
-            Utils.prefs.setIntPref('lineWidth', value);
+        if (!isNaN(value)) {
+            Utils.prefs.set('lineWidth', Number(value));
         }
     },
     get lineWidthLevel() {
-        return this._lineWidth.levels.indexOf(this.lineWidth);
+        return this._lineWidthLevels.indexOf(this.lineWidth);
     },
     set lineWidthLevel(value) {
-        this.lineWidth = this._lineWidth.levels[value];
+        this.lineWidth = this._lineWidthLevels[value];
     },
-    _fontSize: {
-        value: 0,
-        levels: [9, 10, 11, 12, 13, 14, 18, 24, 36, 48, 64, 72, 96]
-    },
+    _fontSizeLevels: [9, 10, 11, 12, 13, 14, 18, 24, 36, 48, 64, 72, 96],
     get fontSize() {
-        var _fontSize = this._fontSize;
-        if (!_fontSize.value) {
-            try {
-                _fontSize.value = Utils.prefs.getIntPref('fontSize');
-            } catch (ex) {
-                // fontSize not set in preference. Trigger set function.
-                this.fontSizeLevel = 6; // 18pt
-            }
-        }
-        return _fontSize.value;
+        return Utils.prefs.get('fontSize', this._fontSizeLevels[6]); // 18px
     },
     set fontSize(value) {
-        var _fontSize = this._fontSize;
-        if (typeof value == 'string') {
-            value = _fontSize.level[value];
-        }
-        if (!isNaN(value) && _fontSize.value != value) {
-            _fontSize.value = value;
-            Utils.prefs.setIntPref('fontSize', value);
+        if (!isNaN(value)) {
+            Utils.prefs.set('fontSize', Number(value));
         }
     },
     get fontSizeLevel() {
-        return this._fontSize.levels.indexOf(this.fontSize);
+        return this._fontSizeLevels.indexOf(this.fontSize);
     },
     set fontSizeLevel(value) {
-        this.fontSize = this._fontSize.levels[value];
+        this.fontSize = this._fontSizeLevels[value];
     },
     init: function() {
         this._listeners['mousedown'] = this._mousedown.bind(this);
@@ -793,25 +793,12 @@ var Pencil = {
 var Color = {
     _colorpicker: null,
     _listeners: {},
-    _selected: null,
     _usePrefix: false,
     get selected() {
-        if (!this._selected) {
-            try {
-                this._selected = Utils.prefs.getCharPref('color');
-            } catch (ex) {
-                // color not set in preference. Trigger set function.
-                this.selected = '#FF0000';
-            }
-        }
-        return this._selected;
+        return Utils.prefs.get('color', '#FF0000');
     },
     set selected(value) {
-        if (this._selected != value) {
-            this._selected = value;
-            Editor.floatbar.panels.color.setColor(value);
-            Utils.prefs.setCharPref('color', value);
-        }
+        Utils.prefs.set('color', value);
     },
     _click: function(evt) {
         this.toggle();
@@ -836,17 +823,19 @@ var Color = {
         if ((visible === true || visible === undefined) && this._colorpicker.style.display == 'none') {
             this._colorpicker.style.display = '';
             document.addEventListener('click', this._listeners.click, false);
-            Editor.floatbar.panels.color.setBackgroundImage({ pressed: 0 });
+            Editor.floatbar.panels.color.refreshBackgroundImage({pressed: 0});
         } else if ((visible === false || visible === undefined) && this._colorpicker.style.display == '') {
             this._colorpicker.style.display = 'none';
             document.removeEventListener('click', this._listeners.click, false);
-            Editor.floatbar.panels.color.setBackgroundImage({ pressed: -1 });
+            Editor.floatbar.panels.color.refreshBackgroundImage({pressed: -1});
         }
     },
     reposition: function() {
-        var rect = Editor.floatbar.panels.color.ele.getBoundingClientRect();
-        this._colorpicker.style.top = rect.bottom + 3 + 'px';
-        this._colorpicker.style.left = rect.left + 'px';
+        if (this._colorpicker && Editor.floatbar.panels.color) {
+            var rect = Editor.floatbar.panels.color.ele.getBoundingClientRect();
+            this._colorpicker.style.top = rect.bottom + 3 + 'px';
+            this._colorpicker.style.left = rect.left + 'px';
+        }
     },
     hex2rgba: function(hex, alpha) {
         if (/^#/.test(hex) && hex.length == 7 && alpha !== undefined) {
@@ -907,7 +896,7 @@ var Editor = {
                     states[this.pressed] = 'pressed';
                     return 'url(chrome://easyscreenshot/skin/image/' + this.id + '-' + states.join('-') + '.png)';
                 };
-                this.setBackgroundImage = function(options) {
+                this.refreshBackgroundImage = function(options) {
                     Utils.merge(this, options);
                     var newImg = this.getBackgroundImage();
                     var oldImg = window.getComputedStyle(this.ele).backgroundImage;
@@ -924,7 +913,8 @@ var Editor = {
                 size: 3,
                 pressed: BaseControl.lineWidthLevel,
                 init: function() {
-                    this.setBackgroundImage();
+                    this.refreshBackgroundImage();
+                    // Utils.prefs.observe('lineWidth', this.refreshBackgroundImage.bind(this));
                 }
             }, {
                 id: 'fontsize',
@@ -936,10 +926,11 @@ var Editor = {
                     return 0;
                 },
                 init: function() {
-                    this.setColor(Color.selected);
+                    this.refreshColor();
+                    Utils.prefs.observe('color', this.refreshColor.bind(this));
                 },
-                setColor: function(color) {
-                    this.ele.firstChild.style.backgroundColor = color;
+                refreshColor: function() {
+                    this.ele.firstChild.style.backgroundColor = Color.selected;
                 }
             }].forEach(function(options) {
                 this.panels[options.id] = new Panel(options);
@@ -987,7 +978,7 @@ var Editor = {
                         break;
                     }
                 }
-                panel.setBackgroundImage();
+                panel.refreshBackgroundImage();
                 evt.stopPropagation();
             };
             [].forEach.call(document.querySelectorAll('#floatbar > li'), function(li) {
@@ -998,7 +989,7 @@ var Editor = {
             });
         },
         reposition: function() {
-            if (this.buttonEle) {
+            if (this.ele && this.buttonEle) {
                 this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
             }
             Color.reposition();
@@ -1039,8 +1030,6 @@ var Editor = {
         return this._current;
     },
     set current(newCurrent) {
-        var self = this;
-
         var oldID = this._current ? this._getID(this._current) : '';
         var newID = newCurrent ? this._getID(newCurrent) : '';
 
@@ -1056,6 +1045,8 @@ var Editor = {
         newBtn[!newBtn.simple && newID == oldID ? 'finish' : 'start']();
     },
     init: function() {
+        var self = this;
+
         this.canvas = Utils.qs('#display');
         try {
             this.canvasData = SnapshotStorage.pop();
@@ -1067,19 +1058,19 @@ var Editor = {
         this._disableUndo();
         this._setupToolbar();
         this.floatbar.init();
-        var self = this;
+
         document.body.addEventListener('keypress', function(evt) {
             if (evt.keyCode == 27) { // Esc
                 self.current = null;
-            }console.log(1);
+            }
             if (self._getID(evt.target) == 'textinput') {
                 return;
-            }console.log(2);
-            Object.keys(self.buttons).some(function(id) {console.log(3);
+            }
+            Object.keys(self.buttons).some(function(id) {
                 var button = self.buttons[id];
-                var key = button.key;console.log(key);
-                return key ? [key.toLowerCase(), key.toUpperCase()].some(function(letter) {console.log(4);
-                    var found = evt.charCode == letter.charCodeAt(0);console.log(found);
+                var key = button.key;
+                return key ? [key.toLowerCase(), key.toUpperCase()].some(function(letter) {
+                    var found = evt.charCode == letter.charCodeAt(0);
                     if (found) {
                         self.current = {id: id};
                         evt.preventDefault();
@@ -1171,11 +1162,11 @@ var Editor = {
             }
         }, {
             id: 'rectangle',
-            key: 'A',
+            key: 'R',
             floatbar: floatbars.line
         }, {
             id: 'line',
-            key: 'E',
+            key: 'D',
             floatbar: floatbars.line
         }, {
             id: 'pencil',
@@ -1183,7 +1174,7 @@ var Editor = {
             floatbar: floatbars.line
         }, {
             id: 'circle',
-            key: 'R',
+            key: 'E',
             floatbar: floatbars.line
         }, {
             id: 'text',
@@ -1232,16 +1223,11 @@ var Editor = {
         Utils.qs('#button-undo').setAttribute('disabled', 'true');
     },
     _saveLocal: function() {
-        var savePosition = '';
-        try {
-            savePosition = Utils.prefs.getCharPref('saveposition');
-        } catch (ex) {
-            savePosition = Cc["@mozilla.org/file/directory_service;1"]
-                    .getService(Ci.nsIProperties)
-                    .get("Desk", Ci.nsILocalFile).path;
-            Utils.prefs.setCharPref('saveposition', savePosition);
-        }
-
+        var savePosition = Utils.prefs.get(
+                            'saveposition',
+                            Cc["@mozilla.org/file/directory_service;1"]
+                                .getService(Ci.nsIProperties)
+                                .get("Desk", Ci.nsILocalFile).path);
         var file = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile);
         file.initWithPath(savePosition);
         var _strings = Cc["@mozilla.org/intl/stringbundle;1"].getService(Ci.nsIStringBundleService).createBundle("chrome://easyscreenshot/locale/easyscreenshot.properties");
@@ -1249,12 +1235,7 @@ var Editor = {
         file.append(defaultFilename);
 
         Utils.download(this.canvas.toDataURL('image/png', ''), file.path, function() {
-            var openDirectory = false;
-            try {
-                openDirectory = Utils.prefs.getBoolPref('opendirectory');
-            } catch (ex) {
-                Utils.prefs.setBoolPref('opendirectory', true);
-            }
+            var openDirectory = Utils.prefs.get('opendirectory', true);
             if (openDirectory) {
                 try {
                   file.reveal();
