@@ -567,9 +567,10 @@ var TextInput = {
     _input: null,
     _listeners: {},
     _origRect: null,
-    _size: {
-        width: Math.ceil(BaseControl.fontSize * 2.4),
-        height: Math.ceil(BaseControl.fontSize * 1.2)
+    _size: {},
+    _refreshSize: function() {
+        this._size.width = Math.ceil(BaseControl.fontSize * 2.4);
+        this._size.height = Math.ceil(BaseControl.fontSize * 1.2);
     },
     _refreshImageData: function() {
         var textRect = this._input.getBoundingClientRect();
@@ -593,12 +594,13 @@ var TextInput = {
             Editor.updateHistory();
         }
     },
-    _click: function(evt) {
+    _click: function(evt) {console.log('text click');
         this._input.blur();
         this._input.style.fontSize = BaseControl.fontSize + 'px';
         this._input.style.left = evt.pageX + 'px';
         this._input.style.top = Math.min(Math.max(evt.pageY - 7, this._origRect[1]), this._origRect[1] + this._origRect[3] - 20) + 'px';
-
+console.log(1);
+        this._refreshSize();
         // The magic number 10 and 5 is to leave some minimal space between text input and page edge
         var maxWidth = this._origRect[0] + this._origRect[2] - evt.pageX - 10;
         var maxHeight = this._origRect[1] + this._origRect[3] - evt.pageY - 5;
@@ -607,7 +609,7 @@ var TextInput = {
             this._hide();
             return;
         }
-
+console.log(2);
         // Text input cannot bypass page edge
         var initialWidth = Math.min(this._size.width, maxWidth);
         var initialHeight = Math.min(this._size.height, maxHeight);
@@ -629,7 +631,7 @@ var TextInput = {
         // Set text color and transparent border
         this._input.style.color = Color.selected;
         this._input.style.borderColor = Color.hex2rgba(Color.selected, 0.5);
-
+console.log(3);
         // Show and focus on the text input
         this._input.style.display = '';
         this._input.focus();
@@ -807,7 +809,7 @@ var Color = {
         this.selected = evt.target.color;
         this.toggle();
     },
-    init: function() {
+    init: function() {console.log('color init');
         // Setup colorpicker
         this._colorpicker = document.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'colorpicker');
         this._colorpicker.id = 'colorpicker';
@@ -820,14 +822,21 @@ var Color = {
         this.toggle(false);
     },
     toggle: function(visible) {
+        if (!this._colorpicker) {
+            return;
+        }
         if ((visible === true || visible === undefined) && this._colorpicker.style.display == 'none') {
             this._colorpicker.style.display = '';
             document.addEventListener('click', this._listeners.click, false);
-            Editor.floatbar.panels.color.refreshBackgroundImage({pressed: 0});
+            if (Editor.floatbar.panels.color) {
+                Editor.floatbar.panels.color.refreshBackgroundImage({pressed: 0});
+            }
         } else if ((visible === false || visible === undefined) && this._colorpicker.style.display == '') {
             this._colorpicker.style.display = 'none';
             document.removeEventListener('click', this._listeners.click, false);
-            Editor.floatbar.panels.color.refreshBackgroundImage({pressed: -1});
+            if (Editor.floatbar.panels.color) {
+                Editor.floatbar.panels.color.refreshBackgroundImage({pressed: -1});
+            }
         }
     },
     reposition: function() {
@@ -871,6 +880,7 @@ var Editor = {
         init: function() {
             var self = this;
             this.ele = Utils.qs('#floatbar');
+            this.hide();
             // Define panel structure
             var Panel = function(options) {
                 this.hover = -1;
@@ -906,7 +916,7 @@ var Editor = {
                 };
                 Utils.merge(this, options);
                 this.ele = Utils.qs('#button-' + this.id);
-            };
+            };console.log('should');
             // Generate panels
             [{
                 id: 'linewidth',
@@ -918,7 +928,53 @@ var Editor = {
                 }
             }, {
                 id: 'fontsize',
-                size: 2
+                size: 1,
+                init: function() {console.log('fontsize init');
+                    this.dropdown.init();
+                },
+                getIndex: function() {
+                    return 0;
+                },
+                dropdown: {
+                    ele: null,
+                    buttonEle: null,
+                    init: function() {console.log('dropdown init');
+                        this.ele = Utils.qs('#fontselect');
+                        this.buttonEle = Utils.qs('#button-fontsize');
+                        this.hide();
+                        this.ele.addEventListener('click', this.click.bind(this), false);
+                        this.ele.addEventListener('blur', this.hide.bind(this), false);
+                    },
+                    toggle: function(visible) {
+                        if ((visible === true || visible === undefined) && this.ele.style.display == 'none') {
+                            this.reposition();
+                            this.ele.style.display = '';
+                            if (Editor.floatbar.panels.fontsize) {
+                                Editor.floatbar.panels.fontsize.refreshBackgroundImage({pressed: 0});
+                            }
+                        } else if ((visible === false || visible === undefined) && this.ele.style.display == '') {
+                            this.ele.style.display = 'none';
+                            if (Editor.floatbar.panels.fontsize) {
+                                Editor.floatbar.panels.fontsize.refreshBackgroundImage({pressed: -1});
+                            }
+                        }
+                    },
+                    show: function() {
+                        this.toggle(true);
+                    },
+                    hide: function() {
+                        this.toggle(false);
+                    },
+                    reposition: function() {console.log('dropdown repo');
+                        this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
+                    },
+                    click: function(evt) {
+                        if (evt.target.nodeName == 'li') {
+                            BaseControl.fontSize = Number(evt.target.textContent);
+                            this.hide();
+                        }
+                    }
+                }
             }, {
                 id: 'color',
                 size: 1,
@@ -935,7 +991,7 @@ var Editor = {
             }].forEach(function(options) {
                 this.panels[options.id] = new Panel(options);
             }, this);
-
+console.log('ahahhahaha');
             var eventHandler = function(evt) {
                 // Detect which panel is the event on
                 var id = Editor._getID(evt.target);
@@ -960,6 +1016,8 @@ var Editor = {
                                 break;
                             }
                             case 'fontsize': {
+                                panel.pressed = panel.pressed < 0 ? 0 : -1;
+                                panel.dropdown.toggle();
                                 break;
                             }
                             case 'color': {
@@ -993,19 +1051,22 @@ var Editor = {
                 this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
             }
             Color.reposition();
+            if (this.panels.fontsize) {
+                this.panels.fontsize.dropdown.reposition();
+            }
         },
         show: function(button, panelsToShow) {
             this.buttonEle = button;
             this.reposition();
-            this.ele.style.display = 'block';
+            this.ele.style.display = '';
 
             Object.keys(this.panels).forEach(function(id) {
                 this.panels[id].ele.style.display = panelsToShow.indexOf(id) >= 0 ? 'inline-block' : 'none';
             }, this);
         },
-        hide: function() {
-            this.ele.style.display = 'none';
-            Color.toggle(false);
+        hide: function() {console.log(this.ele);
+            this.ele.style.display = 'none';console.log('hide1');
+            Color.toggle(false);console.log('hide2');
         }
     },
     get canvas() {
@@ -1120,7 +1181,7 @@ var Editor = {
         // Define floatbar types to avoid repetition
         var floatbars = {
             line: ['linewidth', 'color'],
-            text: [/*'fontsize',*/ 'color']
+            text: ['fontsize', 'color']
         };
         // Define button structure
         var Button = function(options) {
