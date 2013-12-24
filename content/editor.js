@@ -589,10 +589,10 @@ var TextInput = {
     _blur: function() {
         if (!/^\s*$/.test(this._input.value)) {
             this._refreshImageData();
-            this._hide();
-            this._input.value = '';
             Editor.updateHistory();
         }
+        this._hide();
+        this._input.value = '';
     },
     _click: function(evt) {
         this._input.blur();
@@ -1361,7 +1361,7 @@ var Editor = {
         window.close();
     },
     _upToXiuxiu: function() {
-        if(window.console) {
+        if (window.console) {
             console.log('not implemented');
         }
         window.close();
