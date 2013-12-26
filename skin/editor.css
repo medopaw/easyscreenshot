@@ -242,13 +242,15 @@ body {
   background-color: rgba(28, 34, 49, 0.8);
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.75);
   border-radius: 3px;
-  position: fixed;
-  top: 56px;
+  position: absolute;
+  top: 25px;
+  left: 12px;
   width: 42px;
   list-style: none;
   padding: 2px 0 2px 0;
   z-index: 2;
   font: Bold 12px Arial, Helvetica, sans-serif;
+  text-align: left;
   color: #FFFFFF;
   cursor: pointer;
 }

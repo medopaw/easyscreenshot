@@ -936,7 +936,7 @@ var Editor = {
                     this.dropdown.init();
                 },
                 refreshFontSize: function() {
-                    this.ele.textContent = BaseControl.fontSize + ' px';
+                    this.ele.firstChild.textContent = BaseControl.fontSize + ' px';
                 },
                 getIndex: function() {
                     return 0;
@@ -946,7 +946,7 @@ var Editor = {
                     buttonEle: null,
                     _listeners: {},
                     init: function() {
-                        this.ele = Utils.qs('#fontselect');
+                        this.ele = Editor.floatbar.panels.fontsize.ele.appendChild(Utils.qs('#fontselect'));
                         this.buttonEle = Utils.qs('#button-fontsize');
                         this.hide();
                         this._listeners['click'] = this.click.bind(this);
@@ -955,7 +955,7 @@ var Editor = {
                     },
                     toggle: function(visible) {
                         if ((visible === true || visible === undefined) && this.ele.style.display == 'none') {
-                            this.reposition();
+                            // this.reposition();
                             this.ele.style.display = '';
                             document.addEventListener('click', this._listeners.hide, false);
                             if (Editor.floatbar.panels.fontsize) {
@@ -975,9 +975,9 @@ var Editor = {
                     hide: function() {
                         this.toggle(false);
                     },
-                    reposition: function() {
+                    /*reposition: function() {
                         this.ele.style.left = this.buttonEle.getBoundingClientRect().left  + 12 + 'px';
-                    },
+                    },*/
                     click: function(evt) {
                         if (evt.target.nodeName == 'li') {
                             BaseControl.fontSize = Number(evt.target.textContent);
@@ -1028,18 +1028,12 @@ var Editor = {
                             case 'fontsize': {
                                 panel.pressed = panel.pressed < 0 ? 0 : -1;
                                 panel.dropdown.toggle();
-                                if (panel.pressed == 0) {
-                                    evt.stopPropagation();
-                                }
                                 break;
                             }
                             case 'color': {
                                 panel.pressed = panel.pressed < 0 ? 0 : -1;
                                 // Color.reposition();
                                 Color.toggle();
-                                if (panel.pressed == 0) {
-                                    evt.stopPropagation();
-                                }
                                 break;
                             }
                             default: {
@@ -1073,9 +1067,9 @@ var Editor = {
                 this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
             }
             // Color.reposition();
-            if (this.panels.fontsize) {
-                this.panels.fontsize.dropdown.reposition();
-            }
+            // if (this.panels.fontsize) {
+                // this.panels.fontsize.dropdown.reposition();
+            // }
         },
         show: function(button, panelsToShow) {
             this.buttonEle = button;
