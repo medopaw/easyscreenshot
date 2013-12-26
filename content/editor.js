@@ -840,13 +840,6 @@ var Color = {
             }
         }
     },
-    /*reposition: function() {
-        if (this._colorpicker && Editor.floatbar.panels.color) {
-            var rect = Editor.floatbar.panels.color.ele.getBoundingClientRect();
-            this._colorpicker.style.top = rect.bottom + 3 + 'px';
-            this._colorpicker.style.left = rect.left + 'px';
-        }
-    },*/
     hex2rgba: function(hex, alpha) {
         if (/^#/.test(hex) && hex.length == 7 && alpha !== undefined) {
             return 'rgba('
@@ -955,7 +948,6 @@ var Editor = {
                     },
                     toggle: function(visible) {
                         if ((visible === true || visible === undefined) && this.ele.style.display == 'none') {
-                            // this.reposition();
                             this.ele.style.display = '';
                             document.addEventListener('click', this._listeners.hide, false);
                             if (Editor.floatbar.panels.fontsize) {
@@ -975,9 +967,6 @@ var Editor = {
                     hide: function() {
                         this.toggle(false);
                     },
-                    /*reposition: function() {
-                        this.ele.style.left = this.buttonEle.getBoundingClientRect().left  + 12 + 'px';
-                    },*/
                     click: function(evt) {
                         if (evt.target.nodeName == 'li') {
                             BaseControl.fontSize = Number(evt.target.textContent);
@@ -1032,7 +1021,6 @@ var Editor = {
                             }
                             case 'color': {
                                 panel.pressed = panel.pressed < 0 ? 0 : -1;
-                                // Color.reposition();
                                 Color.toggle();
                                 break;
                             }
@@ -1066,10 +1054,6 @@ var Editor = {
             if (this.ele && this.buttonEle) {
                 this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
             }
-            // Color.reposition();
-            // if (this.panels.fontsize) {
-                // this.panels.fontsize.dropdown.reposition();
-            // }
         },
         show: function(button, panelsToShow) {
             this.buttonEle = button;
