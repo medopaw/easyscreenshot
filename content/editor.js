@@ -813,7 +813,8 @@ var Color = {
         // Setup colorpicker
         this._colorpicker = document.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'colorpicker');
         this._colorpicker.id = 'colorpicker';
-        document.body.appendChild(this._colorpicker);
+        // document.body.appendChild(this._colorpicker);
+        Editor.floatbar.panels.color.ele.appendChild(this._colorpicker);
         this._listeners['click'] = this._click.bind(this);
         this._listeners['select'] = this._select.bind(this);
         this._colorpicker.addEventListener('select', this._listeners.select, false);
@@ -839,13 +840,13 @@ var Color = {
             }
         }
     },
-    reposition: function() {
+    /*reposition: function() {
         if (this._colorpicker && Editor.floatbar.panels.color) {
             var rect = Editor.floatbar.panels.color.ele.getBoundingClientRect();
             this._colorpicker.style.top = rect.bottom + 3 + 'px';
             this._colorpicker.style.left = rect.left + 'px';
         }
-    },
+    },*/
     hex2rgba: function(hex, alpha) {
         if (/^#/.test(hex) && hex.length == 7 && alpha !== undefined) {
             return 'rgba('
@@ -1034,7 +1035,7 @@ var Editor = {
                             }
                             case 'color': {
                                 panel.pressed = panel.pressed < 0 ? 0 : -1;
-                                Color.reposition();
+                                // Color.reposition();
                                 Color.toggle();
                                 if (panel.pressed == 0) {
                                     evt.stopPropagation();
@@ -1071,7 +1072,7 @@ var Editor = {
             if (this.ele && this.buttonEle) {
                 this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
             }
-            Color.reposition();
+            // Color.reposition();
             if (this.panels.fontsize) {
                 this.panels.fontsize.dropdown.reposition();
             }

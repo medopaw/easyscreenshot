@@ -183,7 +183,7 @@ body {
   height: 22px;
   margin: 0;
   padding: 6px;
-  overflow: hidden;
+  /*overflow: hidden;*/
   position: fixed;
   top: 36px;
   list-style: none;
@@ -196,6 +196,7 @@ body {
 
 #floatbar > li {
   height: 22px;
+  position: relative;
   display: inline-block;
   font: Bold 12px Arial, Helvetica, sans-serif;
   line-height: 22px;
@@ -353,8 +354,9 @@ body {
   border-radius: 3px;
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.75);
   padding: 5px;
-  position: fixed;
-  top: 45px;
+  position: absolute;
+  top: 25px;
+  left: 0;
   z-index: 3;
 }
 
