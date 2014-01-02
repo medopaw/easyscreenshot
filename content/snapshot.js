@@ -62,7 +62,7 @@
         } catch(err) {
             success = false;
         }
-        
+
         if (width != canvas.width || height != canvas.height) {
             success = false;
         }
@@ -70,7 +70,7 @@
         if (success) {
             sendSnapshot(canvas, ctx);
         } else {
-            alert('Failed! Please check!');
+            // Services.prompt.alert(window, _strings.getString('snapshotFailedTitle'), _strings.getString('snapshotFailedWarning'));
         }
     };
 
@@ -114,19 +114,17 @@
         }
     }
 
-    ns.popupSettings = function() {
+    ns.openSettings = function() {
         var features = "chrome,titlebar,toolbar,centerscreen";
         try {
-            var instantApply = Components.classes["@mozilla.org/preferences-service;1"]
-                             .getService(Components.interfaces.nsIPrefService)
-                             .getBranch("browser.preferences.").getBoolPref("instantApply");
+            var instantApply = Services.prefs.getBranch("browser.preferences.").getBoolPref("instantApply");
             features += instantApply ? ",dialog=no" : ",modal";
         } catch (e) {
           features += ",modal";
         }
         window.openDialog('chrome://easyscreenshot/content/settings-dialog.xul', 'Settings', features).focus();
     }
-    
+
     ns.openSnapshotFeedback = function() {
         gBrowser.selectedTab = gBrowser.addTab('http://mozilla.com.cn/addon/325-easyscreenshot/');
     }

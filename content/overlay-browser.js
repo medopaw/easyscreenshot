@@ -54,11 +54,11 @@ ns.ceEasyScreenshot = {
   init: function ce_easyscreenshot__init() {
     this.installButton("ce_easyscreenshot", "nav-bar");
     gBrowser.tabContainer.addEventListener("TabSelect", this, false);
-  	window.addEventListener("DOMContentLoaded", this, false);
+    window.addEventListener("DOMContentLoaded", this, false);
   },
 
   uninit: function ce_easyscreenshot__init() {
-  	window.removeEventListener("DOMContentLoaded", this, false);
+    window.removeEventListener("DOMContentLoaded", this, false);
   },
 
   installButton: function ce_easyscreenshot__installButton(buttonId,toolbarId) {

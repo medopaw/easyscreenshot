@@ -10,20 +10,20 @@ const {
 } = Components;
 
 var settings = {
-  
+
   _getDownloadsFolder: function(aFolder) {
     switch (aFolder) {
       case "Desktop": {
         let fileLoc = Cc["@mozilla.org/file/directory_service;1"]
-			.getService(Components.interfaces.nsIProperties);
+            .getService(Components.interfaces.nsIProperties);
         return fileLoc.get("Desk", Ci.nsILocalFile);
-	break;
+        break;
       }
       case "Downloads": {
         let dnldMgr = Cc["@mozilla.org/download-manager;1"]
-			  .getService(Ci.nsIDownloadManager);
+            .getService(Ci.nsIDownloadManager);
         return dnldMgr.defaultDownloadsDirectory;
-	break;
+        break;
       }
     }
     throw "ASSERTION FAILED: folder type should be 'Desktop' or 'Downloads'";
@@ -42,28 +42,28 @@ var settings = {
     let path = aFolder.path;
     let saveDirPref = document.getElementById("pref-saveposition");
     saveDirPref.value = aFolder;
-    
+
     let saveDirElem = document.getElementById("settings-saveposition");
     let bundlePreferences = document.getElementById("bundlePreferences");
     switch(this._folderToIndex(aFolder)) {
       case 0: {
-	saveDirElem.label = bundlePreferences.getString("desktopFolderName");
-	break;
+        saveDirElem.label = bundlePreferences.getString("desktopFolderName");
+        break;
       }
       case 1: {
-	saveDirElem.label = bundlePreferences.getString("downloadsFolderName");
-	break;
+        saveDirElem.label = bundlePreferences.getString("downloadsFolderName");
+        break;
       }
       case 2: {
-	saveDirElem.label = path;
-	break;
+        saveDirElem.label = path;
+        break;
       }
     }
-    
+
     let ios = Cc["@mozilla.org/network/io-service;1"]
-		.getService(Ci.nsIIOService);
+        .getService(Ci.nsIIOService);
     let fph = ios.getProtocolHandler("file")
-		.QueryInterface(Ci.nsIFileProtocolHandler);
+        .QueryInterface(Ci.nsIFileProtocolHandler);
     let iconUrlSpec = fph.getURLSpecFromFile(aFolder);
     saveDirElem.image = "moz-icon://" + iconUrlSpec + "?size=16";
   },
@@ -75,7 +75,7 @@ var settings = {
     }
     this._setSaveDirElem(saveDirPref.value);
   },
-  
+
   chooseSaveDir: function() {
     let bundlePreferences = document.getElementById("bundlePreferences");
     let title = bundlePreferences.getString("chooseDownloadFolderTitle");
@@ -87,7 +87,7 @@ var settings = {
       this._setSaveDirElem(fp.file);
     }
   },
-  
+
 };
 
 window.addEventListener("load", function() {

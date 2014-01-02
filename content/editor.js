@@ -3,6 +3,7 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 (function() {
 
+Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://easyscreenshot/snapshot.js");
 
 var Utils = {
@@ -150,9 +151,7 @@ var Utils = {
         }
     },
     prefs: {
-        _branch: Cc['@mozilla.org/preferences-service;1']
-                        .getService(Ci.nsIPrefService)
-                        .getBranch('snapshot.settings.'),
+        _branch: Services.prefs.getBranch('extensions.easyscreenshot.'),
         _type: function(value) {
             return {
                 boolean: 'Bool',
@@ -574,6 +573,7 @@ var TextInput = {
     },
     _refreshImageData: function() {
         var textRect = this._input.getBoundingClientRect();
+        // textarea borders are not needed when capturing screen
         var x = textRect.left + 1;
         var y = textRect.top + 1;
         var w = textRect.width - 2;
@@ -1164,14 +1164,6 @@ var Editor = {
     _setupToolbar: function() {
         var self = this;
         [].forEach.call(document.querySelectorAll('#toolbar > li'), function(li) {
-            var isControl = !!self._controls[self._getID(li)];
-            if (!isControl) {
-                li.addEventListener('mousedown', function(evt) {
-                    this.classList.add('current');
-                    self.pressedBtn = this;
-                    evt.stopPropagation();
-                }, false);
-            }
             li.addEventListener('click', function(evt) {
                 self.current = evt.target;
                 evt.stopPropagation();
@@ -1288,7 +1280,7 @@ var Editor = {
     },
     _saveLocal: function() {
         var savePosition = Utils.prefs.get(
-                            'saveposition',
+                            'savePosition',
                             Cc["@mozilla.org/file/directory_service;1"]
                                 .getService(Ci.nsIProperties)
                                 .get("Desk", Ci.nsILocalFile).path);
@@ -1357,13 +1349,6 @@ window.addEventListener('load', function(evt) {
 window.addEventListener('resize', function(evt) {
     Editor.floatbar.reposition();
     CropOverlay.reposition();
-}, false);
-
-window.addEventListener('mouseup', function(evt) {
-    if (Editor.pressedBtn) {
-        Editor.pressedBtn.classList.remove('current');
-        Editor.pressedBtn = null;
-    }
 }, false);
 
 })();

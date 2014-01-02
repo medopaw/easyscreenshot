@@ -6,52 +6,57 @@ body {
 
 #toolbar {
   background-image: url(chrome://easyscreenshot/skin/image/toolbar-bg.png);
-  width: 100%;
-  height: 35px;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  position: fixed;
-  top: 0;
-  z-index: 2;
-  text-align: center;
-  list-style: none;
   cursor: default;
+  height: 35px;
+  list-style: none;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+  position: fixed;
+  text-align: center;
+  top: 0;
   -moz-user-select: none;
   user-select: none;
+  width: 100%;
+  z-index: 2;
 }
 
 #toolbar > li {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
   cursor: pointer;
+  display: inline-block;
+  height: 20px;
   list-style: none;
+  width: 20px;
 }
 
 #toolbar > li:not(:last-of-type) {
-  margin-left: 1px;
-  padding: 7px 30px 8px 30px;
-  outline: 1px solid #1d2028;
+  background-clip: content-box, border-box;
   background-image: url(chrome://easyscreenshot/skin/image/icons.png),
                     url(chrome://easyscreenshot/skin/image/button-normal.png);
   background-origin: content-box, border-box;
-  background-clip: content-box, border-box;
   background-repeat: no-repeat, no-repeat;
+  margin-left: 1px;
+  outline: 1px solid #1d2028;
+  padding: 7px 30px 8px 30px;
 }
 
 #toolbar > li:last-of-type {
-  float: right;
-  padding: 7px 7px 8px 0;
+  background-clip: content-box;
   background-image: url(chrome://easyscreenshot/skin/image/icons.png);
   background-origin: content-box;
-  background-clip: content-box;
   background-repeat: no-repeat;
+  float: right;
+  padding: 7px 7px 8px 0;
 }
 
 #toolbar > li:not(:last-of-type):hover {
   background-image: url(chrome://easyscreenshot/skin/image/icons.png),
                     url(chrome://easyscreenshot/skin/image/button-highlight.png);
+}
+
+#toolbar > li:not(:last-of-type):active {
+  background-image: url(chrome://easyscreenshot/skin/image/icons.png),
+                    url(chrome://easyscreenshot/skin/image/button-pressed.png);
 }
 
 #toolbar > li.current, #toolbar > li.current:hover {
@@ -176,33 +181,32 @@ body {
 }
 
 #floatbar {
-  display: block;
   background-color: rgba(48, 54, 70, 0.6);
   border: 1px solid rgba(0, 0, 0, 0.3);
   border-radius: 3px;
-  height: 22px;
-  margin: 0;
-  padding: 6px;
-  /*overflow: hidden;*/
-  position: fixed;
-  top: 36px;
-  list-style: none;
-  z-index: 2;
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.75);
   cursor: default;
+  display: block;
+  height: 22px;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  position: fixed;
+  top: 36px;
   -moz-user-select: none;
   user-select: none;
+  z-index: 2;
 }
 
 #floatbar > li {
-  height: 22px;
-  position: relative;
+  cursor: pointer;
   display: inline-block;
   font: Bold 12px Arial, Helvetica, sans-serif;
+  height: 22px;
   line-height: 22px;
+  position: relative;
   text-align: center;
   vertical-align: middle;
-  cursor: pointer;
 }
 
 #button-linewidth {
@@ -211,14 +215,14 @@ body {
 
 #button-fontsize {
   background-image: url(chrome://easyscreenshot/skin/image/fontsize-normal.png);
-  width: 67px;
   color: #FFFFFF;
+  width: 67px;
 }
 
 #button-color {
   background-image: url(chrome://easyscreenshot/skin/image/color-normal.png);
-  width: 35px;
   margin-left: 5px;
+  width: 35px;
 }
 /*
 #button-color:hover {
@@ -230,36 +234,36 @@ body {
 }
 */
 #button-color > div {
-  position: relative;
   top: 6px;
-  left: 7px;
-  width: 12px;
   height: 10px;
+  left: 7px;
+  position: relative;
+  width: 12px;
 }
 
 #fontselect {
-  display: block;
   background-color: rgba(28, 34, 49, 0.8);
-  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.75);
   border-radius: 3px;
-  position: absolute;
-  top: 25px;
-  left: 12px;
-  width: 42px;
-  list-style: none;
-  padding: 2px 0 2px 0;
-  z-index: 2;
-  font: Bold 12px Arial, Helvetica, sans-serif;
-  text-align: left;
+  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.75);
   color: #FFFFFF;
   cursor: pointer;
+  display: block;
+  font: Bold 12px Arial, Helvetica, sans-serif;
+  left: 12px;
+  list-style: none;
+  padding: 2px 0 2px 0;
+  position: absolute;
+  text-align: left;
+  top: 25px;
+  width: 42px;
+  z-index: 2;
 }
 
 #fontselect > li {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
-  width: 42px;
   padding: 4px 0 4px 6px;
+  width: 42px;
 }
 
 #fontselect > li:hover {
@@ -335,30 +339,30 @@ body {
 }
 
 #textinput {
-  display: block;
-  width: 200px;
-  height: 100px;
-  min-width: 200px;
-  min-height: 100px;
-  max-width: 400px;
-  max-height: 200px;
-  padding: 1px;
   background: transparent;
   border: 1px dashed;
+  display: block;
   font: 14px Arial, Helvetica, sans-serif;
+  height: 100px;
+  max-height: 200px;
+  max-width: 400px;
+  min-height: 100px;
+  min-width: 200px;
   overflow: hidden;
-  z-index: 1;
+  padding: 1px;
   resize: none;
+  width: 200px;
+  z-index: 1;
 }
 
 #colorpicker {
   background-color: rgba(28, 34, 49, 0.8);
   border-radius: 3px;
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.75);
+  left: 0;
   padding: 5px;
   position: absolute;
   top: 25px;
-  left: 0;
   z-index: 3;
 }
 
