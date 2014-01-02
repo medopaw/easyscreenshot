@@ -3,7 +3,12 @@ body {
   margin: 0;
   overflow-y: scroll;
 }
-
+/*
+body:before {
+    content: url(chrome://easyscreenshot/skin/image/icons-hover.png) url(chrome://easyscreenshot/skin/image/floatbar-hover.png) url(chrome://easyscreenshot/skin/image/floatbar-pressed.png);
+    display:none;
+}
+*/
 #toolbar {
   background-image: url(chrome://easyscreenshot/skin/image/toolbar-bg.png);
   cursor: default;
@@ -31,7 +36,7 @@ body {
 
 #toolbar > li:not(:last-of-type) {
   background-clip: content-box, border-box;
-  background-image: url(chrome://easyscreenshot/skin/image/icons.png),
+  background-image: url(chrome://easyscreenshot/skin/image/toolbar.png),
                     url(chrome://easyscreenshot/skin/image/button-normal.png);
   background-origin: content-box, border-box;
   background-repeat: no-repeat, no-repeat;
@@ -42,7 +47,7 @@ body {
 
 #toolbar > li:last-of-type {
   background-clip: content-box;
-  background-image: url(chrome://easyscreenshot/skin/image/icons.png);
+  background-image: url(chrome://easyscreenshot/skin/image/toolbar.png);
   background-origin: content-box;
   background-repeat: no-repeat;
   float: right;
@@ -50,17 +55,17 @@ body {
 }
 
 #toolbar > li:not(:last-of-type):hover {
-  background-image: url(chrome://easyscreenshot/skin/image/icons.png),
+  background-image: url(chrome://easyscreenshot/skin/image/toolbar.png),
                     url(chrome://easyscreenshot/skin/image/button-highlight.png);
 }
 
 #toolbar > li:not(:last-of-type):active {
-  background-image: url(chrome://easyscreenshot/skin/image/icons.png),
+  background-image: url(chrome://easyscreenshot/skin/image/toolbar-active.png),
                     url(chrome://easyscreenshot/skin/image/button-pressed.png);
 }
 
 #toolbar > li.current, #toolbar > li.current:hover {
-  background-image: url(chrome://easyscreenshot/skin/image/icons.png),
+  background-image: url(chrome://easyscreenshot/skin/image/toolbar-active.png),
                     url(chrome://easyscreenshot/skin/image/button-pressed.png);
 }
 
@@ -68,116 +73,43 @@ body {
   background-position: -20px 0, 0 0;
 }
 
-#button-crop:hover {
-  background-position: -20px 0px, 0 0;
-}
-
-#button-crop.current {
-  background-position: -20px -20px, 0 0;
-}
-
 #button-rectangle {
   background-position: -40px 0, 0 0;
-}
-
-#button-rectangle:hover {
-  background-position: -40px 0px, 0 0;
-}
-
-#button-rectangle.current {
-  background-position: -40px -20px, 0 0;
 }
 
 #button-circle {
   background-position: -60px 0, 0 0;
 }
-
-#button-circle:hover {
-  background-position: -60px 0px, 0 0;
-}
-
-#button-circle.current {
-  background-position: -60px -20px, 0 0;
-}
-
 #button-line {
   background-position: -80px 0, 0 0;
-}
-
-#button-line:hover {
-  background-position: -80px 0px, 0 0;
-}
-
-#button-line.current {
-  background-position: -80px -20px, 0 0;
 }
 
 #button-pencil {
   background-position: -100px 0, 0 0;
 }
 
-#button-pencil:hover {
-  background-position: -100px 0px, 0 0;
-}
-
-#button-pencil.current {
-  background-position: -100px -20px, 0 0;
-}
-
 #button-text {
   background-position: -120px 0, 0 0;
-}
-
-#button-text:hover {
-  background-position: -120px 0px, 0 0;
-}
-
-#button-text.current {
-  background-position: -120px -20px, 0 0;
 }
 
 #button-blur {
   background-position: -140px 0, 0 0;
 }
 
-#button-blur:hover {
-  background-position: -140px 0px, 0 0;
-}
-
-#button-blur.current {
-  background-position: -140px -20px, 0 0;
-}
-
 #button-undo {
   background-position: -160px 0, 0 0;
-}
-
-#button-undo:hover {
-  background-position: -160px 0px, 0 0;
 }
 
 #button-local {
   background-position: -180px 0, 0 0;
 }
 
-#button-local:hover {
-  background-position: -180px 0px, 0 0;
-}
-
 #button-copy {
   background-position: -200px 0, 0 0;
 }
 
-#button-copy:hover {
-  background-position: -200px 0px, 0 0;
-}
-
 #button-cancel {
   background-position: 0 0;
-}
-
-#button-cancel:hover {
-  background-position: 0 -20px;
 }
 
 #floatbar {
@@ -199,6 +131,7 @@ body {
 }
 
 #floatbar > li {
+  background-image: url(chrome://easyscreenshot/skin/image/floatbar.png);
   cursor: pointer;
   display: inline-block;
   font: Bold 12px Arial, Helvetica, sans-serif;
@@ -214,13 +147,11 @@ body {
 }
 
 #button-fontsize {
-  background-image: url(chrome://easyscreenshot/skin/image/fontsize-normal.png);
   color: #FFFFFF;
   width: 67px;
 }
 
 #button-color {
-  background-image: url(chrome://easyscreenshot/skin/image/color-normal.png);
   margin-left: 5px;
   width: 35px;
 }
