@@ -59,13 +59,17 @@ body:before {
                     url(chrome://easyscreenshot/skin/image/button-highlight.png);
 }
 
+#toolbar >li:last-of-type:hover {
+  background-image: url(chrome://easyscreenshot/skin/image/toolbar-secondary.png);
+}
+
 #toolbar > li:not(:last-of-type):active {
-  background-image: url(chrome://easyscreenshot/skin/image/toolbar-active.png),
+  background-image: url(chrome://easyscreenshot/skin/image/toolbar-secondary.png),
                     url(chrome://easyscreenshot/skin/image/button-pressed.png);
 }
 
 #toolbar > li.current, #toolbar > li.current:hover {
-  background-image: url(chrome://easyscreenshot/skin/image/toolbar-active.png),
+  background-image: url(chrome://easyscreenshot/skin/image/toolbar-secondary.png),
                     url(chrome://easyscreenshot/skin/image/button-pressed.png);
 }
 
