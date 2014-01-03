@@ -63,12 +63,7 @@ body:before {
   background-image: url(chrome://easyscreenshot/skin/image/toolbar-secondary.png);
 }
 
-#toolbar > li:not(:last-of-type):active {
-  background-image: url(chrome://easyscreenshot/skin/image/toolbar-secondary.png),
-                    url(chrome://easyscreenshot/skin/image/button-pressed.png);
-}
-
-#toolbar > li.current, #toolbar > li.current:hover {
+#toolbar > li:not(:last-of-type):active, #toolbar > li.current, #toolbar > li.current:hover {
   background-image: url(chrome://easyscreenshot/skin/image/toolbar-secondary.png),
                     url(chrome://easyscreenshot/skin/image/button-pressed.png);
 }
@@ -135,39 +130,69 @@ body:before {
 }
 
 #floatbar > li {
-  background-image: url(chrome://easyscreenshot/skin/image/floatbar.png);
-  cursor: pointer;
-  display: inline-block;
   font: Bold 12px Arial, Helvetica, sans-serif;
-  height: 22px;
   line-height: 22px;
-  position: relative;
   text-align: center;
   vertical-align: middle;
 }
 
-#button-linewidth {
-  width: 124px;
+#floatbar li {
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  height: 22px;
+  position: relative;
 }
 
-#button-fontsize {
+#floatbar li:not(.container) {
+  background-image: url(chrome://easyscreenshot/skin/image/floatbar.png);
+}
+
+#floatbar li:not(.container):hover {
+  background-image: url(chrome://easyscreenshot/skin/image/floatbar-hover.png);
+}
+
+#floatbar li:not(.container):active, #floatbar li:not(.container).current, #floatbar li:not(.container).current:hover {
+  background-image: url(chrome://easyscreenshot/skin/image/floatbar-active.png);
+}
+
+li.container > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#button-lineWidth > ul {
+  height: 22px;
+}
+
+#button-lineWidth li:first-of-type {
+  background-position: 0 0, 0 0;
+  width: 41px;
+}
+
+#button-lineWidth li:nth-of-type(2) {
+  background-position: -41px 0, 0 0;
+  width: 41px;
+}
+
+#button-lineWidth li:last-of-type {
+  background-position: -82px 0, 0 0;
+  width: 42px;
+}
+
+#button-fontSize {
+  background-position: -124px 0, 0 0;
   color: #FFFFFF;
   width: 67px;
 }
 
 #button-color {
+  background-position: -191px 0, 0 0;
   margin-left: 5px;
   width: 35px;
 }
-/*
-#button-color:hover {
-  background-image: url(chrome://easyscreenshot/skin/image/color-highlight.png);
-}
 
-#button-color.pressed {
-  background-image: url(chrome://easyscreenshot/skin/image/color-pressed.png);
-}
-*/
 #button-color > div {
   top: 6px;
   height: 10px;
@@ -182,7 +207,8 @@ body:before {
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.75);
   color: #FFFFFF;
   cursor: pointer;
-  display: block;
+  /*display: block;*/
+  display: none;
   font: Bold 12px Arial, Helvetica, sans-serif;
   left: 12px;
   list-style: none;

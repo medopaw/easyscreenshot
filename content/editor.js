@@ -430,35 +430,21 @@ var BaseControl = {
     },
     _stroke: function(ctx, x, y, w, h) {
     },
-    _lineWidthLevels: [3, 6, 9],
     get lineWidth() {
-        return Utils.prefs.get('lineWidth', this._lineWidthLevels[1]);
+        return Utils.prefs.get('lineWidth', 6);
     },
     set lineWidth(value) {
         if (!isNaN(value)) {
             Utils.prefs.set('lineWidth', Number(value));
         }
     },
-    get lineWidthLevel() {
-        return this._lineWidthLevels.indexOf(this.lineWidth);
-    },
-    set lineWidthLevel(value) {
-        this.lineWidth = this._lineWidthLevels[value];
-    },
-    _fontSizeLevels: [9, 10, 11, 12, 13, 14, 18, 24, 36, 48, 64, 72, 96],
     get fontSize() {
-        return Utils.prefs.get('fontSize', this._fontSizeLevels[6]); // 18px
+        return Utils.prefs.get('fontSize', 18);
     },
     set fontSize(value) {
         if (!isNaN(value)) {
             Utils.prefs.set('fontSize', Number(value));
         }
-    },
-    get fontSizeLevel() {
-        return this._fontSizeLevels.indexOf(this.fontSize);
-    },
-    set fontSizeLevel(value) {
-        this.fontSize = this._fontSizeLevels[value];
     },
     init: function() {
         this._listeners['mousedown'] = this._mousedown.bind(this);
@@ -830,13 +816,13 @@ var Color = {
             this._colorpicker.style.display = '';
             document.addEventListener('click', this._listeners.click, false);
             if (Editor.floatbar.panels.color) {
-                Editor.floatbar.panels.color.refreshBackgroundImage({pressed: 0});
+                Editor.floatbar.panels.color.classList.add('current');
             }
         } else if ((visible === false || visible === undefined) && this._colorpicker.style.display == '') {
             this._colorpicker.style.display = 'none';
             document.removeEventListener('click', this._listeners.click, false);
             if (Editor.floatbar.panels.color) {
-                Editor.floatbar.panels.color.refreshBackgroundImage({pressed: -1});
+                Editor.floatbar.panels.color.classList.remove('current');
             }
         }
     },
@@ -876,88 +862,72 @@ var Editor = {
             this.ele = Utils.qs('#floatbar');
             this.hide();
             // Define panel structure
-            var Panel = function(options) {
-                this.hover = -1;
-                this.pressed = -1;
-                this.init = function() {};
-                this.getIndex = function(evt) {
-                    var rect = this.ele.getBoundingClientRect();
-                    var width = this.ele.clientWidth;
-                    var x = evt.clientX - rect.left;
-                    if (x < 0) {
-                        x = 0;
-                    } else if (x >= width) {
-                        x = width - 1;
-                    }
-                    return Math.floor(x * this.size / width);
-                };
-                this.getBackgroundImage = function() {
-                    var states = [];
-                    for (var i = 0; i < this.size; i++) {
-                        states.push('normal');
-                    }
-                    states[this.hover] = 'highlight';
-                    states[this.pressed] = 'pressed';
-                    return 'url(chrome://easyscreenshot/skin/image/' + this.id + '-' + states.join('-') + '.png)';
-                };
-                this.refreshBackgroundImage = function(options) {
-                    Utils.merge(this, options);
-                    var newImg = this.getBackgroundImage();
-                    var oldImg = window.getComputedStyle(this.ele).backgroundImage;
-                    if (newImg != oldImg) {
-                        this.ele.style.backgroundImage = newImg;
-                    }
-                };
-                Utils.merge(this, options);
-                this.ele = Utils.qs('#button-' + this.id);
+            var Panel = function(options) {console.log('panel init');console.log(this);
+                Utils.merge(this, options);console.log(1);
+                this.ele = Utils.qs('#button-' + this.id);console.log(2);
+                if (this.init) {console.log('init');
+                    this.init();
+                }
+                if (this.refresh) {console.log('refresh');
+                    this.refresh();
+                    Utils.prefs.observe(this.id, this.refresh.bind(this));
+                }
+                if (this.click) {console.log('click');
+                    this.ele.addEventListener('click', this.click.bind(this));
+                }
             };
             // Generate panels
             [{
-                id: 'linewidth',
-                size: 3,
-                pressed: BaseControl.lineWidthLevel,
-                init: function() {
-                    this.refreshBackgroundImage();
-                    // Utils.prefs.observe('lineWidth', this.refreshBackgroundImage.bind(this));
+                id: 'lineWidth',
+                children: null,
+                init: function() {console.log('line init');
+                    this.children = this.ele.getElementsByTagName('li');
+                },
+                refresh: function() {console.log(10);
+                    Array.prototype.forEach.call(this.children, function(li) {
+                        li.classList[li.value == BaseControl.lineWidth ? 'add' : 'remove']('current');
+                    });console.log(11);
+                },
+                click: function(evt) {
+                    if (evt.target.nodeName == 'li') {
+                        BaseControl.lineWidth = evt.target.value;
+                    }
                 }
             }, {
-                id: 'fontsize',
-                size: 1,
-                init: function() {
-                    this.refreshFontSize();
-                    Utils.prefs.observe('fontSize', this.refreshFontSize.bind(this));
-                    this.dropdown.init();
+                id: 'fontSize',
+                init: function() {console.log('font init');
+                    // this.dropdown.init();
                 },
-                refreshFontSize: function() {
+                refresh: function() {
                     this.ele.firstChild.textContent = BaseControl.fontSize + ' px';
                 },
-                getIndex: function() {
-                    return 0;
+                click: function() {
+                    this.dropdown.toggle();
                 },
                 dropdown: {
                     ele: null,
                     buttonEle: null,
                     _listeners: {},
-                    init: function() {
-                        this.ele = Editor.floatbar.panels.fontsize.ele.appendChild(Utils.qs('#fontselect'));
-                        this.buttonEle = Utils.qs('#button-fontsize');
-                        this.hide();
-                        this._listeners['click'] = this.click.bind(this);
-                        this._listeners['hide'] = this.hide.bind(this);
+                    init: function() {console.log(100);
+                        this.ele = Editor.floatbar.panels.fontSize.ele.appendChild(Utils.qs('#fontselect'));console.log(101);
+                        this.buttonEle = Utils.qs('#button-fontSize');console.log(102);
+                        this._listeners.click = this.click.bind(this);
+                        this._listeners.hide = this.hide.bind(this);
                         this.ele.addEventListener('click', this._listeners.click, false);
+                        this.hide();
                     },
-                    toggle: function(visible) {
+                    toggle: function(visible) {console.log(200);
                         if ((visible === true || visible === undefined) && this.ele.style.display == 'none') {
                             this.ele.style.display = '';
                             document.addEventListener('click', this._listeners.hide, false);
-                            if (Editor.floatbar.panels.fontsize) {
-                                Editor.floatbar.panels.fontsize.refreshBackgroundImage({pressed: 0});
+                            if (Editor.floatbar.panels.fontSize) {
+                                Editor.floatbar.panels.fontSize.ele.classList.add('current');
                             }
                         } else if ((visible === false || visible === undefined) && this.ele.style.display == '') {
                             this.ele.style.display = 'none';
-                            document.removeEventListener('click', this._listeners.hide, false);
-                            if (Editor.floatbar.panels.fontsize) {
-                                Editor.floatbar.panels.fontsize.refreshBackgroundImage({pressed: -1});
+                            document.removeEventListener('click', this._listeners.hide, false);console.log(202);
+                            if (Editor.floatbar.panels.fontSize) {
+                                Editor.floatbar.panels.fontSize.ele.classList.remove('current');
                             }
                         }
                     },
@@ -971,27 +941,24 @@ var Editor = {
                         if (evt.target.nodeName == 'li') {
                             BaseControl.fontSize = Number(evt.target.textContent);
                         }
-                        this._hide();
+                        this.hide();
                     }
                 }
             }, {
                 id: 'color',
-                size: 1,
-                getIndex: function() {
-                    return 0;
-                },
-                init: function() {
-                    this.refreshColor();
-                    Utils.prefs.observe('color', this.refreshColor.bind(this));
-                },
-                refreshColor: function() {
+                refresh: function() {
                     this.ele.firstChild.style.backgroundColor = Color.selected;
+                },
+                click: function() {console.log('color');
+                    Color.toggle();
                 }
             }].forEach(function(options) {
                 this.panels[options.id] = new Panel(options);
             }, this);
 
-            var eventHandler = function(evt) {
+            this.panels.fontSize.dropdown.init();
+
+            /*var eventHandler = function(evt) {
                 // Detect which panel is the event on
                 var id = Editor._getID(evt.target);
                 var panel = self.panels[id];
@@ -1042,13 +1009,7 @@ var Editor = {
                 }
                 panel.refreshBackgroundImage();
                 evt.stopPropagation();
-            };
-            [].forEach.call(document.querySelectorAll('#floatbar > li'), function(li) {
-                li.addEventListener('mousemove', eventHandler, false);
-                li.addEventListener('mouseleave', eventHandler, false);
-                li.addEventListener('click', eventHandler, false);
-                self.panels[Editor._getID(li)].init();
-            });
+            };*/
         },
         reposition: function() {
             if (this.ele && this.buttonEle) {
@@ -1066,8 +1027,8 @@ var Editor = {
         },
         hide: function() {
             this.ele.style.display = 'none';
-            if (this.panels.fontsize) {
-                this.panels.fontsize.dropdown.hide();
+            if (this.panels.fontSize) {
+                this.panels.fontSize.dropdown.hide();
             }
             Color.toggle(false);
         }
@@ -1175,8 +1136,8 @@ var Editor = {
         var self = this;
         // Define floatbar types to avoid repetition
         var floatbars = {
-            line: ['linewidth', 'color'],
-            text: ['fontsize', 'color']
+            line: ['lineWidth', 'color'],
+            text: ['fontSize', 'color']
         };
         // Define button structure
         var Button = function(options) {
