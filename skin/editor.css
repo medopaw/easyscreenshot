@@ -37,7 +37,7 @@ body:before {
 #toolbar > li:not(:last-of-type) {
   background-clip: content-box, border-box;
   background-image: url(chrome://easyscreenshot/skin/image/toolbar.png),
-                    url(chrome://easyscreenshot/skin/image/button-normal.png);
+                    url(chrome://easyscreenshot/skin/image/button.png);
   background-origin: content-box, border-box;
   background-repeat: no-repeat, no-repeat;
   margin-left: 1px;
@@ -56,7 +56,7 @@ body:before {
 
 #toolbar > li:not(:last-of-type):hover {
   background-image: url(chrome://easyscreenshot/skin/image/toolbar.png),
-                    url(chrome://easyscreenshot/skin/image/button-highlight.png);
+                    url(chrome://easyscreenshot/skin/image/button-hover.png);
 }
 
 #toolbar >li:last-of-type:hover {
@@ -65,7 +65,7 @@ body:before {
 
 #toolbar > li:not(:last-of-type):active, #toolbar > li.current, #toolbar > li.current:hover {
   background-image: url(chrome://easyscreenshot/skin/image/toolbar-secondary.png),
-                    url(chrome://easyscreenshot/skin/image/button-pressed.png);
+                    url(chrome://easyscreenshot/skin/image/button-active.png);
 }
 
 #button-crop {
@@ -79,6 +79,7 @@ body:before {
 #button-circle {
   background-position: -60px 0, 0 0;
 }
+
 #button-line {
   background-position: -80px 0, 0 0;
 }
@@ -207,8 +208,7 @@ li.container > ul {
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.75);
   color: #FFFFFF;
   cursor: pointer;
-  /*display: block;*/
-  display: none;
+  display: block;
   font: Bold 12px Arial, Helvetica, sans-serif;
   left: 12px;
   list-style: none;
@@ -221,6 +221,7 @@ li.container > ul {
 }
 
 #fontselect > li {
+  background-image: none !important;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   padding: 4px 0 4px 6px;
@@ -320,6 +321,7 @@ li.container > ul {
   background-color: rgba(28, 34, 49, 0.8);
   border-radius: 3px;
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.75);
+  display: block;
   left: 0;
   padding: 5px;
   position: absolute;
@@ -327,6 +329,6 @@ li.container > ul {
   z-index: 3;
 }
 
-.sound {
+audio {
   display: none;
 }
