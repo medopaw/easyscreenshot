@@ -499,18 +499,17 @@ var Line = {
     _rect: null,
     _startxy: null,
     _stroke: function(ctx, x, y, w, h) {
-                                    ctx.beginPath();
-                                    var dir = this._dir;
-                              if(dir == 1 || dir == 3){
-                                    ctx.moveTo(x, y+h);
-                                    ctx.lineTo(x+w, y);
-                              } else {
-                                    ctx.moveTo(x, y);
-                                    ctx.lineTo(x+w, y+h);
-                              }
-
-                                    ctx.stroke();
-                                    ctx.closePath();
+        ctx.beginPath();
+        var dir = this._dir;
+        if(dir == 1 || dir == 3){
+            ctx.moveTo(x, y+h);
+            ctx.lineTo(x+w, y);
+        } else {
+            ctx.moveTo(x, y);
+            ctx.lineTo(x+w, y+h);
+        }
+        ctx.stroke();
+        ctx.closePath();
     },
     start: function(x, y, w, h) {
         this.__proto__.start.bind(this)(x, y, w, h, 'linecanvas');
@@ -567,7 +566,9 @@ var TextInput = {
 
         this._canvas.width = w;
         this._canvas.height = h;
+        Editor.floatbar.hide();
         this._ctx.drawWindow(window.content, x + window.scrollX, y + window.scrollY, w, h, "rgb(255,255,255)");
+        Editor.floatbar.show();
 
         var canvasRect = Editor.canvas.getBoundingClientRect();
         Editor.ctx.putImageData(this._ctx.getImageData(0, 0, w, h), x - canvasRect.left, y - canvasRect.top);
@@ -994,13 +995,18 @@ var Editor = {
             }
         },
         show: function(button, panelsToShow) {
-            this.buttonEle = button;
-            this.reposition();
+            if (button) {
+                this.buttonEle = button;
+                this.reposition();
+            }
+
             this.ele.style.display = '';
 
-            Object.keys(this.panels).forEach(function(id) {
-                this.panels[id].ele.style.display = panelsToShow.indexOf(id) >= 0 ? 'inline-block' : 'none';
-            }, this);
+            if (panelsToShow) {
+                Object.keys(this.panels).forEach(function(id) {
+                    this.panels[id].ele.style.display = panelsToShow.indexOf(id) >= 0 ? 'inline-block' : 'none';
+                }, this);
+            }
         },
         hide: function() {
             this.ele.style.display = 'none';
