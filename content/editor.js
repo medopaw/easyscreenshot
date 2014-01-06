@@ -944,8 +944,6 @@ var Editor = {
                 click: function(evt) {
                     this.pressed = !this.pressed;
                     self.panels.color.pressed = false;
-                    // this.dropdown.toggle();
-                    // Color.toggle(false);
                     evt.stopPropagation();
                 },
                 dropdown: {
@@ -964,8 +962,6 @@ var Editor = {
                         if (evt.target.nodeName == 'li') {
                             BaseControl.fontSize = Number(evt.target.textContent);
                         }
-                        // this.visible = false;
-                        // evt.stopPropagation();
                     }
                 }
             }, {
@@ -980,8 +976,6 @@ var Editor = {
                 click: function(evt) {
                     this.pressed = !this.pressed;
                     self.panels.fontSize.pressed = false;
-                    // self.panels.fontSize.dropdown.hide();
-                    // Color.toggle();
                     evt.stopPropagation();
                 }
             }].forEach(function(options) {
@@ -1109,7 +1103,6 @@ var Editor = {
         [].forEach.call(document.querySelectorAll('#toolbar > li'), function(li) {
             li.addEventListener('click', function(evt) {
                 self.current = evt.target;
-                // evt.stopPropagation();
             }, false);
         });
         this._setupButtons();
