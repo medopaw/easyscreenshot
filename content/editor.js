@@ -779,52 +779,31 @@ var Pencil = {
     }
 };
 var Color = {
-    _colorpicker: null,
-    _listeners: {},
-    _usePrefix: false,
+    ele: null,
+    listeners: {},
+    usePrefix: false,
     get selected() {
         return Utils.prefs.get('color', '#FF0000');
     },
     set selected(value) {
         Utils.prefs.set('color', value);
     },
-    _click: function(evt) {
-        this.toggle(false);
-    },
-    _select: function(evt) {
+    select: function(evt) {
         this.selected = evt.target.color;
-        this.toggle(false);
     },
     init: function() {
         // Setup colorpicker
-        this._colorpicker = document.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'colorpicker');
-        this._colorpicker.id = 'colorpicker';
-        // document.body.appendChild(this._colorpicker);
-        Editor.floatbar.panels.color.ele.appendChild(this._colorpicker);
-        this._listeners['click'] = this._click.bind(this);
-        this._listeners['select'] = this._select.bind(this);
-        this._colorpicker.addEventListener('select', this._listeners.select, false);
+        this.ele = document.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'colorpicker');
+        this.ele.id = 'colorpicker';
+        this.parent.ele.appendChild(this.ele);
+        this.listeners.select = this.select.bind(this);
+        this.listeners.hide = (function() {
+            this.visible = false;
+        }).bind(this);
+        this.ele.addEventListener('select', this.listeners.select, false);
 
         // Hide colorpicker
-        this.toggle(false);
-    },
-    toggle: function(visible) {console.log('Color toggle');
-        if (!this._colorpicker) {
-            return;
-        }console.log(1);
-        if ((visible === true || visible === undefined) && this._colorpicker.style.display == 'none') {console.log(2);
-            this._colorpicker.style.display = '';
-            document.addEventListener('click', this._listeners.click, false);console.log(2.1);
-            if (Editor.floatbar.panels.color) {
-                Editor.floatbar.panels.color.ele.classList.add('current');
-            }console.log(2.2);
-        } else if ((visible === false || visible === undefined) && this._colorpicker.style.display == '') {console.log(3);
-            this._colorpicker.style.display = 'none';
-            document.removeEventListener('click', this._listeners.click, false);console.log(3.1);console.log(Editor.floatbar.panels.color);
-            if (Editor.floatbar.panels.color) {
-                Editor.floatbar.panels.color.ele.classList.remove('current');
-            }console.log(3.2);
-        }
+        this.hide();
     },
     hex2rgba: function(hex, alpha) {
         if (/^#/.test(hex) && hex.length == 7 && alpha !== undefined) {
@@ -858,34 +837,93 @@ var Editor = {
         panels: {},
         buttonEle: null,
         init: function() {
+            a = this;
             var self = this;
             this.ele = Utils.qs('#floatbar');
             // Define panel structure
             var Panel = function(options) {
                 this.listeners = {};
-                Utils.merge(this, options);console.log(1);
-                this.ele = Utils.qs('#button-' + this.id);console.log(2);
+                Utils.merge(this, options);
+                this.ele = Utils.qs('#button-' + this.id);
             };
+            Object.defineProperty(Panel.prototype, 'pressed', {
+                enumerable: true,
+                get: function() {
+                    return this.ele.classList.contains('current');
+                },
+                set: function(value) {
+                    this.toggle(value);
+                    if (this.child) {
+                        this.child.toggle(value);
+                    }
+                }
+            });
             Utils.merge(Panel.prototype, {
-                _init: function() {console.log('_init');
-                    if (this.refresh) {console.log('has refresh');
+                _init: function() {
+                    if (this.refresh) {
                         this.refresh();
                         Utils.prefs.observe(this.id, this.refresh.bind(this));
                     }
-                    if (this.click) {console.log('has click');
+                    if (this.click) {
                         this.listeners.click = this.click.bind(this);
                         this.ele.addEventListener('click', this.listeners.click);
                     }
+                },
+                _setChild: function(child) {
+                    this.child = child;
+                    this.child.parent = this;
+                    Object.defineProperty(this.child, 'visible', {
+                        enumerable: true,
+                        get: function() {
+                            return this.ele.style.display != 'none';
+                        },
+                        set: function(value) {
+                            this.toggle(value);
+                            this.parent.toggle(value);
+                        }
+                    });
+                    Utils.merge(this.child, {
+                        show: function() {
+                            this.toggle(true);
+                        },
+                        hide: function() {
+                            this.toggle(false);
+                        },
+                        toggle: function(toShow) {
+                            if (toShow === undefined) {
+                                toShow = !this.visible;
+                            }
+                            this.ele.style.display = toShow ? '' : 'none';
+                            if (this.listeners.hide) {
+                                document[(toShow ? 'add' : 'remove') + 'EventListener']('click', this.listeners.hide, false);
+                            }
+                        }
+                    });
+                    if (this.child.init) {
+                        this.child.init();
+                    }
+                },
+                press: function() {
+                    this.toggle(true);
+                },
+                release: function() {
+                    this.toggle(false);
+                },
+                toggle: function(toPress) {
+                    if (toPress === undefined) {
+                        toPress = !this.pressed;
+                    }
+                    this.ele.classList[toPress ? 'add' : 'remove']('current');
                 }
             });
             // Generate panels
             [{
                 id: 'lineWidth',
-                init: function() {console.log(this._init);
+                init: function() {
                     this._init();
                 },
                 refresh: function() {
-                    Array.prototype.forEach.call(this.ele.getElementsByTagName('li'), function(li) {console.log('linewidth li:'+li.value);
+                    Array.prototype.forEach.call(this.ele.getElementsByTagName('li'), function(li) {
                         li.classList[li.value == BaseControl.lineWidth ? 'add' : 'remove']('current');
                     });
                 },
@@ -896,72 +934,54 @@ var Editor = {
                 }
             }, {
                 id: 'fontSize',
-                init: function() {console.log('font init');
+                init: function() {
                     this._init();
-                    this.dropdown.init();
+                    this._setChild(this.dropdown);
                 },
                 refresh: function() {
                     this.ele.firstChild.textContent = BaseControl.fontSize + ' px';
                 },
                 click: function(evt) {
-                    this.dropdown.toggle();
-                    Color.toggle(false);
+                    this.pressed = !this.pressed;
+                    self.panels.color.pressed = false;
+                    // this.dropdown.toggle();
+                    // Color.toggle(false);
                     evt.stopPropagation();
                 },
                 dropdown: {
                     ele: null,
-                    buttonEle: null,
                     listeners: {},
-                    init: function() {console.log(100);
-                        this.ele = Utils.qs('#button-fontSize').appendChild(Utils.qs('#fontselect'));console.log(101);
-                        this.buttonEle = Utils.qs('#button-fontSize');console.log(102);
+                    init: function() {
+                        this.ele = Utils.qs('#button-fontSize').appendChild(Utils.qs('#fontselect'));
                         this.listeners.click = this.click.bind(this);
-                        this.listeners.hide = this.hide.bind(this);
+                        this.listeners.hide = (function() {
+                            this.visible = false;
+                        }).bind(this);
                         this.ele.addEventListener('click', this.listeners.click, false);
                         this.hide();
                     },
-                    toggle: function(visible) {console.log(200);
-                    try{
-                        if ((visible === true || visible === undefined) && this.ele.style.display == 'none') {
-                            this.ele.style.display = '';
-                            document.addEventListener('click', this.listeners.hide, false);
-                            if (Editor.floatbar.panels.fontSize) {
-                                Editor.floatbar.panels.fontSize.ele.classList.add('current');
-                            }
-                        } else if ((visible === false || visible === undefined) && this.ele.style.display == '') {
-                            this.ele.style.display = 'none';
-                            document.removeEventListener('click', this.listeners.hide, false);console.log(202);
-                            if (Editor.floatbar.panels.fontSize) {
-                                Editor.floatbar.panels.fontSize.ele.classList.remove('current');
-                            }
-                        }
-                    }catch(ex) {alert(ex);}
-                    },
-                    show: function() {
-                        this.toggle(true);
-                    },
-                    hide: function() {
-                        this.toggle(false);
-                    },
                     click: function(evt) {
-                        if (evt.target.nodeName == 'li') {console.log(evt.target);
+                        if (evt.target.nodeName == 'li') {
                             BaseControl.fontSize = Number(evt.target.textContent);
                         }
-                        this.hide();
-                        evt.stopPropagation();
+                        // this.visible = false;
+                        // evt.stopPropagation();
                     }
                 }
             }, {
                 id: 'color',
                 init: function() {
                     this._init();
+                    this._setChild(Color);
                 },
                 refresh: function() {
                     this.ele.firstChild.style.backgroundColor = Color.selected;
                 },
-                click: function(evt) {console.log('color');
-                    self.panels.fontSize.dropdown.hide();
-                    Color.toggle();
+                click: function(evt) {
+                    this.pressed = !this.pressed;
+                    self.panels.fontSize.pressed = false;
+                    // self.panels.fontSize.dropdown.hide();
+                    // Color.toggle();
                     evt.stopPropagation();
                 }
             }].forEach(function(options) {
@@ -973,58 +993,6 @@ var Editor = {
             }, this);
 
             this.hide();
-            /*var eventHandler = function(evt) {
-                // Detect which panel is the event on
-                var id = Editor._getID(evt.target);
-                var panel = self.panels[id];
-                // Detect which region is the event on
-                var index = panel.getIndex(evt);
-                // Call different callbacks according to different event types
-                switch (evt.type) {
-                    case 'mousemove': {
-                        panel.hover = index;
-                        break;
-                    }
-                    case 'mouseleave': {
-                        panel.hover = -1;
-                        break;
-                    }
-                    case 'click': {
-                        switch (id) {
-                            case 'linewidth': {
-                                BaseControl.lineWidthLevel = index;
-                                panel.pressed = index;
-                                break;
-                            }
-                            case 'fontsize': {
-                                panel.pressed = panel.pressed < 0 ? 0 : -1;
-                                panel.dropdown.toggle();
-                                break;
-                            }
-                            case 'color': {
-                                panel.pressed = panel.pressed < 0 ? 0 : -1;
-                                Color.toggle();
-                                break;
-                            }
-                            default: {
-                                break;
-                            }
-                        }
-                        if (id != 'fontsize') {
-                            self.panels.fontsize.dropdown.hide();
-                        }
-                        if (id != 'color') {
-                            Color.toggle(false);
-                        }
-                        break;
-                    }
-                    default: {
-                        break;
-                    }
-                }
-                panel.refreshBackgroundImage();
-                evt.stopPropagation();
-            };*/
         },
         reposition: function() {
             if (this.ele && this.buttonEle) {
@@ -1042,10 +1010,6 @@ var Editor = {
         },
         hide: function() {
             this.ele.style.display = 'none';
-            /*if (this.panels.fontSize) {
-                this.panels.fontSize.dropdown.hide();
-            }*/
-            // Color.toggle(false);
         }
     },
     get canvas() {
@@ -1091,6 +1055,9 @@ var Editor = {
         try {
             this.canvasData = SnapshotStorage.pop();
         } catch(ex) {
+            ['fontselect', 'floatbar', 'textinput'].forEach(function(id) {
+                Utils.qs('#' + id).style.display = 'none';
+            });
             window.location.href = "http://mozilla.com.cn/addon/325-easyscreenshot/";
             return;
         }
@@ -1119,7 +1086,7 @@ var Editor = {
                 }) : false;
             });
         }, false);
-        [CropOverlay, Rect, Line, Pencil, Circ, TextInput, Blur, Color].forEach(function(control) {
+        [CropOverlay, Rect, Line, Pencil, Circ, TextInput, Blur].forEach(function(control) {
             control.init();
         });
         this.playSound('capture');
@@ -1142,7 +1109,7 @@ var Editor = {
         [].forEach.call(document.querySelectorAll('#toolbar > li'), function(li) {
             li.addEventListener('click', function(evt) {
                 self.current = evt.target;
-                evt.stopPropagation();
+                // evt.stopPropagation();
             }, false);
         });
         this._setupButtons();
@@ -1157,7 +1124,7 @@ var Editor = {
         // Define button structure
         var Button = function(options) {
             Utils.merge(this, options);
-            // options must has id
+            // id is a must
             this.ele = Utils.qs('#button-' + this.id);
         };
         Utils.merge(Button.prototype, {
