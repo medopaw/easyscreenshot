@@ -27,16 +27,18 @@ var Utils = {
     isFunction: function(a) {
         return typeof a == 'function';
     },
+    // Copy all attributes of one object into another. Very useful.
     merge: function(mergeTo, mergeFrom) {
-        var allObject = [mergeTo, mergeFrom].every(function(value) {
+        var bothAreObjects = [mergeTo, mergeFrom].every(function(value) {
             return typeof value == 'object';
         });
-        if (allObject) {
+        if (bothAreObjects) {
             Object.keys(mergeFrom).forEach(function(key) {
                 mergeTo[key] = mergeFrom[key];
             });
         }
     },
+    // Simple downloading tool function
     download: function(url, path, onsuccess, onerror, oncancel) {
         var jsm = {};
         try {
@@ -150,8 +152,10 @@ var Utils = {
             persist.saveURI(source, null, null, null, null, target, null);
         }
     },
+    // Simple preference tool object
     prefs: {
         _branch: Services.prefs.getBranch('extensions.easyscreenshot.'),
+        // Use typeof paramter to determine the pref type
         _type: function(value) {
             return {
                 boolean: 'Bool',
@@ -184,6 +188,7 @@ var Utils = {
         }
     }
 };
+
 var CropOverlay = {
     _listeners: {},
     _overlay: {},
@@ -339,6 +344,7 @@ var CropOverlay = {
         Editor.updateHistory();
     }
 };
+
 var BaseControl = {
     _canvas: null,
     _ctx: null,
@@ -475,6 +481,7 @@ var BaseControl = {
         document.body.removeChild(this._canvas);
     }
 };
+
 var Rect = {
     __proto__: BaseControl,
     _canvas: null,
@@ -490,6 +497,7 @@ var Rect = {
         this.__proto__.start.bind(this)(x, y, w, h, 'rectcanvas');
     }
 };
+
 var Line = {
     __proto__: BaseControl,
     _canvas: null,
@@ -515,6 +523,7 @@ var Line = {
         this.__proto__.start.bind(this)(x, y, w, h, 'linecanvas');
     }
 };
+
 var Circ = {
     __proto__: BaseControl,
     _canvas: null,
@@ -544,6 +553,7 @@ var Circ = {
         this.__proto__.start.bind(this)(x, y, w, h, 'circcanvas');
     }
 };
+
 var TextInput = {
     __proto__: BaseControl,
     _canvas: null,
@@ -660,6 +670,7 @@ var TextInput = {
         this._hide();
     }
 };
+
 var Blur = {
     __proto__: BaseControl,
     _canvas: null,
@@ -728,6 +739,7 @@ var Blur = {
         this._bluredData = null;
     }
 };
+
 var Pencil = {
     __proto__: BaseControl,
     _canvas: null,
@@ -779,6 +791,7 @@ var Pencil = {
         this.__proto__.cancel.bind(this)();
     }
 };
+
 var Color = {
     ele: null,
     listeners: {},
@@ -816,7 +829,27 @@ var Color = {
         }
         return hex;
     }
-}
+};
+
+var FontSelect = {
+    ele: null,
+    listeners: {},
+    init: function() {
+        this.ele = Utils.qs('#button-fontSize').appendChild(Utils.qs('#fontselect'));
+        this.listeners.click = this.click.bind(this);
+        this.listeners.hide = (function() {
+            this.visible = false;
+        }).bind(this);
+        this.ele.addEventListener('click', this.listeners.click, false);
+        this.hide();
+    },
+    click: function(evt) {
+        if (evt.target.nodeName == 'li') {
+            BaseControl.fontSize = Number(evt.target.textContent);
+        }
+    }
+};
+
 const HISTORY_LENGHT_MAX = 50;
 var Editor = {
     _controls: {
@@ -937,7 +970,7 @@ var Editor = {
                 id: 'fontSize',
                 init: function() {
                     this._init();
-                    this._setChild(this.dropdown);
+                    this._setChild(FontSelect);
                 },
                 refresh: function() {
                     this.ele.firstChild.textContent = BaseControl.fontSize + ' px';
@@ -946,24 +979,6 @@ var Editor = {
                     this.pressed = !this.pressed;
                     self.panels.color.pressed = false;
                     evt.stopPropagation();
-                },
-                dropdown: {
-                    ele: null,
-                    listeners: {},
-                    init: function() {
-                        this.ele = Utils.qs('#button-fontSize').appendChild(Utils.qs('#fontselect'));
-                        this.listeners.click = this.click.bind(this);
-                        this.listeners.hide = (function() {
-                            this.visible = false;
-                        }).bind(this);
-                        this.ele.addEventListener('click', this.listeners.click, false);
-                        this.hide();
-                    },
-                    click: function(evt) {
-                        if (evt.target.nodeName == 'li') {
-                            BaseControl.fontSize = Number(evt.target.textContent);
-                        }
-                    }
                 }
             }, {
                 id: 'color',
