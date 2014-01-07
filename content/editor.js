@@ -563,12 +563,15 @@ var TextInput = {
     _origRect: null,
     _size: {},
     _refreshSize: function() {
-        this._size.width = Math.ceil(BaseControl.fontSize * 2.4);
+        // Factor 1.2 per character looks good
+        // Initial size set to 2x1 characters
+        this._size.width = Math.ceil(BaseControl.fontSize * 1.2 * 2);
         this._size.height = Math.ceil(BaseControl.fontSize * 1.2);
     },
     _refreshImageData: function() {
         var textRect = this._input.getBoundingClientRect();
-        // textarea borders are not needed when capturing screen
+
+        // Textarea borders are not needed when capturing screen
         var x = textRect.left + 1;
         var y = textRect.top + 1;
         var w = textRect.width - 2;
@@ -576,8 +579,11 @@ var TextInput = {
 
         this._canvas.width = w;
         this._canvas.height = h;
+
+        // Hide floatbar temporarily to avoid overlapping
         Editor.floatbar.hide();
         this._ctx.drawWindow(window.content, x + window.scrollX, y + window.scrollY, w, h, "rgb(255,255,255)");
+        // Show floatbar again after capturing text area
         Editor.floatbar.show();
 
         var canvasRect = Editor.canvas.getBoundingClientRect();
@@ -819,6 +825,7 @@ var Color = {
         // Hide colorpicker
         this.hide();
     },
+    // e.g. (#FFFFFF, 0.5) => (255, 255, 255, 0.5)
     hex2rgba: function(hex, alpha) {
         if (/^#/.test(hex) && hex.length == 7 && alpha !== undefined) {
             return 'rgba('
@@ -871,7 +878,6 @@ var Editor = {
         panels: {},
         buttonEle: null,
         init: function() {
-            a = this;
             var self = this;
             this.ele = Utils.qs('#floatbar');
             // Define panel structure
