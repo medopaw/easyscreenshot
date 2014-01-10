@@ -119,8 +119,8 @@ var Utils = {
                     return 'unknown';
                 },
                 onDownloadStateChange: function(a, aDownload) {
-                    if (aDownload.source.spec == source.spec
-                        && aDownload.targetFile.path == target.path
+                    if (decodeURI(aDownload.source.spec) == decodeURI(source.spec)
+                        && decodeURI(aDownload.targetFile.path) == decodeURI(target.path)
                         && this.complete.indexOf(aDownload.state) >= 0) {
                         downloadManager.removeListener(downloadProgressListener);
                         switch (this.status(aDownload.state)) {
@@ -174,28 +174,41 @@ var Utils = {
             return {
                 boolean: 'Bool',
                 number: 'Int',
-                string: 'Char'
+                string: 'Char',
+                object: 'Complex'
             }[typeof value];
         },
         get: function(name, defaultValue) {
             var type = this._type(defaultValue);
             var getter = 'get' + type + 'Pref';
-            var setter = 'set' + type + 'Pref';
 
             var value;
-            try {
-                value = this._branch[getter](name);
-            } catch (ex) {
-                value = defaultValue;
-                this._branch[setter](name, value);
+            if (type == 'Complex') {
+                try {
+                    value = this._branch.getComplexValue(name, defaultValue.type);
+                } catch (ex) {
+                    this.set(name, defaultValue);
+                    value = defaultValue.value;
+                }
+            } else {
+                try {
+                    value = this._branch[getter](name);
+                } catch (ex) {
+                    this.set(name, defaultValue);
+                    value = defaultValue;
+                }
             }
             return value;
         },
-        set: function(name, value) {
-            var type = this._type(value);
+        set: function(name, newValue) {
+            var type = this._type(newValue);
             var setter = 'set' + type + 'Pref';
 
-            this._branch[setter](name, value);
+            if (type == 'Complex') {
+                this._branch.setComplexValue(name, newValue.type, newValue.value);
+            } else {
+                this._branch[setter](name, newValue);
+            }
         },
         observe: function(name, callback) {
             this._branch.addObserver(name, {observe: callback}, false);
@@ -1279,13 +1292,12 @@ var Editor = {
         Utils.qs('#button-undo').setAttribute('disabled', 'true');
     },
     _saveLocal: function() {
-        var savePosition = Utils.prefs.get(
-                            'savePosition',
-                            Cc["@mozilla.org/file/directory_service;1"]
-                                .getService(Ci.nsIProperties)
-                                .get("Desk", Ci.nsILocalFile).path);
-        var file = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile);
-        file.initWithPath(savePosition);
+        var file = Utils.prefs.get('savePosition', {
+            type: Ci.nsILocalFile,
+            value: Cc["@mozilla.org/file/directory_service;1"]
+                    .getService(Ci.nsIProperties)
+                    .get("Desk", Ci.nsILocalFile)
+        });
         var defaultFilename = Utils.strs.get('SnapFilePrefix') + '_' + (new Date()).toISOString().replace(/:/g, '-') + '.png';
         file.append(defaultFilename);
 
@@ -1302,7 +1314,7 @@ var Editor = {
 
         this.playSound('export');
         Utils.notification.notify(Utils.strs.get('saveNotification'), {
-            body: savePosition
+            body: file.parent.path
         });
         Utils.interrupt('window.close();');
     },
