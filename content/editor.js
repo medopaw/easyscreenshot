@@ -38,6 +38,9 @@ var Utils = {
             });
         }
     },
+    interrupt: function(callback) {
+        setTimeout(callback, 0);
+    },
     // Simple downloading tool function
     download: function(url, path, onsuccess, onerror, oncancel) {
         var jsm = {};
@@ -79,10 +82,8 @@ var Utils = {
                                  | Ci.nsIWebBrowserPersist.PERSIST_FLAGS_AUTODETECT_APPLY_CONVERSION;
 
             var downloadManager = Cc['@mozilla.org/download-manager;1'].getService(Ci.nsIDownloadManager);
-            try{
             var download = downloadManager.addDownload(Ci.nsIDownload.DOWNLOAD_TYPE_DOWNLOAD,
                 source, target, '', null, null, null, persist, null);
-            } catch (ex) {alert(ex);}
             var downloadProgressListener = {
                 complete: [
                     Ci.nsIDownloadManager.DOWNLOAD_FINISHED,
@@ -152,6 +153,14 @@ var Utils = {
             persist.saveURI(source, null, null, null, null, target, null);
         }
     },
+    strs: {
+        _bundle: Services.strings.createBundle("chrome://easyscreenshot/locale/easyscreenshot.properties"),
+        get: function(name, formats) {
+            return formats === undefined
+                    ? this._bundle.GetStringFromName(name)
+                    : this._bundle.formatStringFromName(name, formats, formats.length);
+        }
+    },
     // Simple preference tool object
     prefs: {
         _branch: Services.prefs.getBranch('extensions.easyscreenshot.'),
@@ -185,6 +194,22 @@ var Utils = {
         },
         observe: function(name, callback) {
             this._branch.addObserver(name, {observe: callback}, false);
+        }
+    },
+    notification: {
+        check: function() {
+            if (Notification && Notification.permission !== 'granted') {
+                Notification.requestPermission(function(status) {
+                    if (Notification.permission !== status) {
+                        Notification.permission = status;
+                    }
+                });
+            }
+        },
+        notify: function(msg) {
+            if (Notification && Notification.permission === 'granted') {
+                new Notification(msg);
+            }
         }
     }
 };
@@ -619,8 +644,6 @@ var TextInput = {
         // Initial size is minimal size. Cannot be smaller than this.
         this._size.minWidth = initialWidth;
         this._size.minHeight = initialHeight;
-        this._input.style.width = initialWidth + 'px';
-        this._input.style.height = initialHeight + 'px';
 
         // Set minimal size
         this._input.style.minWidth = initialWidth + 'px';
@@ -639,9 +662,11 @@ var TextInput = {
         this._input.focus();
 
         // Let Chinese input method put all characters first
-        setTimeout((function() {
+        Utils.interrupt((function() {
             this._input.value = '';
-        }).bind(this), 0);
+            this._input.style.width = initialWidth + 'px';
+            this._input.style.height = initialHeight + 'px';
+        }).bind(this));
     },
     _hide: function() {
         this._input.style.display = 'none';
@@ -1253,8 +1278,7 @@ var Editor = {
                                 .get("Desk", Ci.nsILocalFile).path);
         var file = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile);
         file.initWithPath(savePosition);
-        var _strings = Cc["@mozilla.org/intl/stringbundle;1"].getService(Ci.nsIStringBundleService).createBundle("chrome://easyscreenshot/locale/easyscreenshot.properties");
-        var defaultFilename = _strings.GetStringFromName('SnapFilePrefix') + '_' + (new Date()).toISOString().replace(/:/g, '-') + '.png';
+        var defaultFilename = Utils.strs.get('SnapFilePrefix') + '_' + (new Date()).toISOString().replace(/:/g, '-') + '.png';
         file.append(defaultFilename);
 
         Utils.download(this.canvas.toDataURL('image/png', ''), file.path, function() {
@@ -1269,7 +1293,8 @@ var Editor = {
         });
 
         this.playSound('export');
-        window.close();
+        Utils.notification.notify(Utils.strs.get('saveNotification'));
+        Utils.interrupt('window.close();');
     },
     _copyToClipboard: function() {
         var imagedata = this.canvas.toDataURL("image/png", "");
@@ -1293,7 +1318,8 @@ var Editor = {
         clip.setData(trans, null, clipid.kGlobalClipboard);
 
         this.playSound('export');
-        window.close();
+        Utils.notification.notify(Utils.strs.get('copyNotification'));
+        Utils.interrupt('window.close();');
     },
     _cancelAndClose: function() {
         window.close();
@@ -1311,6 +1337,7 @@ var Editor = {
 
 window.addEventListener('load', function(evt) {
     Editor.init();
+    Utils.notification.check();
 }, false);
 
 window.addEventListener('resize', function(evt) {
