@@ -1254,7 +1254,7 @@ var Editor = {
         file.append(defaultFilename);
 
         Utils.download(this.canvas.toDataURL('image/png', ''), file.path, function() {
-            var openDirectory = Utils.prefs.get('opendirectory', true);
+            var openDirectory = Utils.prefs.get('openDirectory', true);
             if (openDirectory) {
                 try {
                   file.reveal();
