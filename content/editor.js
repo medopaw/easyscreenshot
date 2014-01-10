@@ -155,10 +155,13 @@ var Utils = {
     },
     strs: {
         _bundle: Services.strings.createBundle("chrome://easyscreenshot/locale/easyscreenshot.properties"),
-        get: function(name, formats) {
-            return formats === undefined
-                    ? this._bundle.GetStringFromName(name)
-                    : this._bundle.formatStringFromName(name, formats, formats.length);
+        get: function(name, args) {
+            if (args) {
+                args = Array.prototype.slice.call(arguments, 1);
+                return this._bundle.formatStringFromName(name, args, args.length);
+            } else {
+                return this._bundle.GetStringFromName(name);
+            }
         }
     },
     // Simple preference tool object
