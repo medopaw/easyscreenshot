@@ -758,8 +758,8 @@ var Pencil = {
     _origRect: null,
     _radius: 1,
     _draw: function(x, y) {
-                                    Editor.ctx.lineTo(x, y);
-                                    Editor.ctx.stroke();
+        Editor.ctx.lineTo(x, y);
+        Editor.ctx.stroke();
     },
     _mousedown: function(evt) {
         var rx = evt.pageX - this._origRect[0];
@@ -767,15 +767,15 @@ var Pencil = {
         this._startxy = [rx, ry];
         Editor.ctx.lineWidth = BaseControl.lineWidth;
         Editor.ctx.strokeStyle = Color.selected;
-                                    Editor.ctx.moveTo(rx, ry);
-                                    Editor.ctx.beginPath();
+            Editor.ctx.moveTo(rx, ry);
+            Editor.ctx.beginPath();
         document.addEventListener('mousemove', this._listeners.mousemove, false);
         document.addEventListener('mouseup', this._listeners.mouseup, false);
         evt.stopPropagation();
         evt.preventDefault();
     },
     _mouseup: function(evt) {
-                                    Editor.ctx.closePath();
+        Editor.ctx.closePath();
         document.removeEventListener('mousemove', this._listeners.mousemove, false);
         document.removeEventListener('mouseup', this._listeners.mouseup, false);
         evt.stopPropagation();
