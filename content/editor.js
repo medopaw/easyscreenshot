@@ -595,7 +595,6 @@ var TextInput = {
             Editor.updateHistory();
         }
         this._hide();
-        this._input.value = '';
     },
     _click: function(evt) {
         this._input.blur();
@@ -638,6 +637,11 @@ var TextInput = {
         // Show and focus on the text input
         this._input.style.display = '';
         this._input.focus();
+
+        // Let Chinese input method put all characters first
+        setTimeout((function() {
+            this._input.value = '';
+        }).bind(this), 0);
     },
     _hide: function() {
         this._input.style.display = 'none';
