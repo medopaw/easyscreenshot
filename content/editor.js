@@ -37,6 +37,8 @@ var Utils = {
                 mergeTo[key] = mergeFrom[key];
             });
         }
+        // Return value is useful for anonymous objects
+        return mergeTo;
     },
     interrupt: function(callback) {
         setTimeout(callback, 0);
@@ -209,9 +211,12 @@ var Utils = {
                 });
             }
         },
-        notify: function(msg) {
+        notify: function(msg, options) {
             if (Notification && Notification.permission === 'granted') {
-                new Notification(msg);
+                new Notification(msg, Utils.merge({
+                    tag: 'easyscreenshot',
+                    icon: 'chrome://easyscreenshot/skin/image/easyscreenshot.png'
+                }, options || {}));
             }
         }
     }
@@ -1296,7 +1301,9 @@ var Editor = {
         });
 
         this.playSound('export');
-        Utils.notification.notify(Utils.strs.get('saveNotification'));
+        Utils.notification.notify(Utils.strs.get('saveNotification'), {
+            body: savePosition
+        });
         Utils.interrupt('window.close();');
     },
     _copyToClipboard: function() {
