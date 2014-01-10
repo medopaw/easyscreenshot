@@ -1313,9 +1313,7 @@ var Editor = {
         trans.addDataFlavor(channel.contentType);
         trans.setTransferData(channel.contentType, wrapped, channel.contentLength);
 
-        var clipid = Ci.nsIClipboard;
-        var clip = Cc["@mozilla.org/widget/clipboard;1"].getService(clipid);
-        clip.setData(trans, null, clipid.kGlobalClipboard);
+        Services.clipboard.setData(trans, null, Ci.nsIClipboard.kGlobalClipboard);
 
         this.playSound('export');
         Utils.notification.notify(Utils.strs.get('copyNotification'));
