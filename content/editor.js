@@ -37,7 +37,7 @@ var Utils = {
                 mergeTo[key] = mergeFrom[key];
             });
         }
-        // Return value is useful for anonymous objects
+        // Returned value is useful for anonymous objects
         return mergeTo;
     },
     interrupt: function(callback) {
@@ -155,6 +155,7 @@ var Utils = {
             persist.saveURI(source, null, null, null, null, target, null);
         }
     },
+    // Simple string bundle tool object
     strs: {
         _bundle: Services.strings.createBundle("chrome://easyscreenshot/locale/easyscreenshot.properties"),
         get: function(name, args) {
