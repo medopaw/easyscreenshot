@@ -36,9 +36,9 @@
         tooltiptext="&easyscreenshot.button.tooltip;"
         oncommand="MOA.ESS.ceEasyScreenshot.onCommand();event.stopPropagation();">
         <menupopup>
-            <menuitem id="easyscreenshot-snapshot-select" label="&easyscreenshot_snapshot_select;" accesskey="c" key="select-normal-key" oncommand="if (MOA.ESS.ceEasyScreenshot.isHttp()) MOA.ESS.Snapshot.ssSelector();event.stopPropagation();"/>
-            <menuitem id="easyscreenshot-snapshot-entire" label="&easyscreenshot_snapshot_entire;" accesskey="l" key="select-entire-key" oncommand="if (MOA.ESS.ceEasyScreenshot.isHttp()) MOA.ESS.Snapshot.getSnapshot('entire');event.stopPropagation();"/>
-            <menuitem id="easyscreenshot-snapshot-visible" label="&easyscreenshot_snapshot_visible;" accesskey="v" key="select-visible-key" oncommand="if (MOA.ESS.ceEasyScreenshot.isHttp()) MOA.ESS.Snapshot.getSnapshot('visible');event.stopPropagation();"/>
+            <menuitem id="easyscreenshot-snapshot-select" label="&easyscreenshot_snapshot_select;" accesskey="c" key="select-normal-key" oncommand="MOA.ESS.Snapshot.ssSelector();event.stopPropagation();"/>
+            <menuitem id="easyscreenshot-snapshot-entire" label="&easyscreenshot_snapshot_entire;" accesskey="l" key="select-entire-key" oncommand="MOA.ESS.Snapshot.getSnapshot('entire');event.stopPropagation();"/>
+            <menuitem id="easyscreenshot-snapshot-visible" label="&easyscreenshot_snapshot_visible;" accesskey="v" key="select-visible-key" oncommand="MOA.ESS.Snapshot.getSnapshot('visible');event.stopPropagation();"/>
             <menuseparator/>
             <menuitem id="easyscreenshot-snapshot-settings" label="&easyscreenshot_snapshot_settings;" oncommand="MOA.ESS.Snapshot.openSettings();event.stopPropagation();"/>
             <menuitem id="easyscreenshot-snapshot-feedback" label="&easyscreenshot_snapshot_feedback;" oncommand="MOA.ESS.Snapshot.openSnapshotFeedback();event.stopPropagation();"/>
