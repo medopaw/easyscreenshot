@@ -3,12 +3,7 @@ body {
   margin: 0;
   overflow-y: scroll;
 }
-/*
-body:before {
-    content: url(chrome://easyscreenshot/skin/image/icons-hover.png) url(chrome://easyscreenshot/skin/image/floatbar-hover.png) url(chrome://easyscreenshot/skin/image/floatbar-pressed.png);
-    display:none;
-}
-*/
+
 #toolbar {
   background-image: url(chrome://easyscreenshot/skin/image/toolbar-bg.png);
   cursor: default;

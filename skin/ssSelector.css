@@ -51,7 +51,7 @@ ssSelector-selection * {
 }
 ssSelector-selection {
 	background: transparent;
-	border: 1px dashed silver;
+	border: none;
 	box-shadow: 0 0 0 10000px hsla(0, 0%, 20%, 0.8);
 	overflow: hidden;
 }
