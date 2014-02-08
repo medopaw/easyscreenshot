@@ -649,10 +649,10 @@ var TextInput = {
   _size: {},
   _refreshSize: function() {
     // Factor 1.2 per character looks good
-    const factor = 1.2;
+    const FACTOR = 1.2;
     // Initial size set to 2x1 characters
-    this._size.width = Math.ceil(BaseControl.fontSize * factor * 2);
-    this._size.height = Math.ceil(BaseControl.fontSize * factor);
+    this._size.width = Math.ceil(BaseControl.fontSize * FACTOR * 2);
+    this._size.height = Math.ceil(BaseControl.fontSize * FACTOR);
   },
   _refreshImageData: function() {
     var textRect = this._input.getBoundingClientRect();
@@ -690,10 +690,10 @@ var TextInput = {
 
     this._refreshSize();
     // marginX and marginY are to leave some minimal space between text input and page edge
-    const marginX = 10;
-    const marginY = 5;
-    var maxWidth = this._origRect[0] + this._origRect[2] - evt.pageX - marginX;
-    var maxHeight = this._origRect[1] + this._origRect[3] - evt.pageY - marginY;
+    const MARGINX = 10;
+    const MARGINY = 5;
+    var maxWidth = this._origRect[0] + this._origRect[2] - evt.pageX - MARGINX;
+    var maxHeight = this._origRect[1] + this._origRect[3] - evt.pageY - MARGINY;
     // Don't show text input if too close to page edge
     if (maxWidth <= 0 || maxHeight <= 0) {
       this._hide();
@@ -938,6 +938,162 @@ var FontSelect = {
   }
 };
 
+var Panel = function(options) {
+  this.listeners = {};
+  Utils.merge(this, options);
+  this.ele = Utils.qs('#button-' + this.id);
+};
+Object.defineProperty(Panel.prototype, 'pressed', {
+  enumerable: true,
+  get: function() {
+    return this.ele.classList.contains('current');
+  },
+  set: function(value) {
+    this.toggle(value);
+    if (this.child) {
+      this.child.toggle(value);
+    }
+  }
+});
+Utils.merge(Panel.prototype, {
+  _init: function() {
+    if (this.refresh) {
+      this.refresh();
+      Utils.prefs.observe(this.id, this.refresh.bind(this));
+    }
+    if (this.click) {
+      this.listeners.click = this.click.bind(this);
+      this.ele.addEventListener('click', this.listeners.click);
+    }
+    if (this.child) {
+      this._initChild();
+    }
+  },
+  _initChild: function() {
+    this.child.parent = this;
+    Object.defineProperty(this.child, 'visible', {
+      enumerable: true,
+      get: function() {
+        return this.ele.style.display != 'none';
+      },
+      set: function(value) {
+        this.toggle(value);
+        this.parent.toggle(value);
+      }
+    });
+    Utils.merge(this.child, {
+      show: function() {
+        this.toggle(true);
+      },
+      hide: function() {
+        this.toggle(false);
+      },
+      toggle: function(toShow) {
+        if (toShow === undefined) {
+          toShow = !this.visible;
+        }
+        this.ele.style.display = toShow ? '' : 'none';
+        if (this.listeners.hide) {
+          document[(toShow ? 'add' : 'remove') + 'EventListener']('click', this.listeners.hide, false);
+        }
+      }
+    });
+    if (this.child.init) {
+      this.child.init();
+    }
+  },
+  press: function() {
+    this.toggle(true);
+  },
+  release: function() {
+    this.toggle(false);
+  },
+  toggle: function(toPress) {
+    if (toPress === undefined) {
+      toPress = !this.pressed;
+    }
+    this.ele.classList[toPress ? 'add' : 'remove']('current');
+  }
+});
+
+var Floatbar = {
+  ele: null,
+  panels: {},
+  buttonEle: null,
+  init: function() {
+    var self = this;
+    this.ele = Utils.qs('#floatbar');
+
+    // Generate panels
+    [{
+      id: 'lineWidth',
+      refresh: function() {
+        Array.prototype.forEach.call(this.ele.getElementsByTagName('li'), function(li) {
+          li.classList[li.value == BaseControl.lineWidth ? 'add' : 'remove']('current');
+        });
+      },
+      click: function(evt) {
+        if (evt.target.nodeName == 'li') {
+          BaseControl.lineWidth = evt.target.value;
+        }
+      }
+    }, {
+      id: 'fontSize',
+      child: FontSelect,
+      refresh: function() {
+        this.ele.firstChild.textContent = BaseControl.fontSize + ' px';
+      },
+      click: function(evt) {
+        this.pressed = !this.pressed;
+        self.panels.color.pressed = false;
+        evt.stopPropagation();
+      }
+    }, {
+      id: 'color',
+      child: Color,
+      refresh: function() {
+        this.ele.firstChild.style.backgroundColor = Color.selected;
+      },
+      click: function(evt) {
+        this.pressed = !this.pressed;
+        self.panels.fontSize.pressed = false;
+        evt.stopPropagation();
+      }
+    }].forEach(function(options) {
+      this.panels[options.id] = new Panel(options);
+    }, this);
+
+    // Init panels
+    Object.keys(this.panels).forEach(function(id) {
+      this.panels[id]._init();
+    }, this);
+
+    this.hide();
+  },
+  reposition: function() {
+    if (this.ele && this.buttonEle) {
+      this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
+    }
+  },
+  show: function(button, panelsToShow) {
+    if (button) {
+      this.buttonEle = button;
+      this.reposition();
+    }
+
+    this.ele.style.display = '';
+
+    if (panelsToShow) {
+      Object.keys(this.panels).forEach(function(id) {
+        this.panels[id].ele.style.display = panelsToShow.indexOf(id) >= 0 ? 'inline-block' : 'none';
+      }, this);
+    }
+  },
+  hide: function() {
+    this.ele.style.display = 'none';
+  }
+};
+
 const HISTORY_LENGHT_MAX = 50;
 var Editor = {
   _controls: {
@@ -954,166 +1110,7 @@ var Editor = {
   _current: null,
   _history: [],
   buttons: {},
-  floatbar: {
-    ele: null,
-    panels: {},
-    buttonEle: null,
-    init: function() {
-      var self = this;
-      this.ele = Utils.qs('#floatbar');
-      // Define panel structure
-      var Panel = function(options) {
-        this.listeners = {};
-        Utils.merge(this, options);
-        this.ele = Utils.qs('#button-' + this.id);
-      };
-      Object.defineProperty(Panel.prototype, 'pressed', {
-        enumerable: true,
-        get: function() {
-          return this.ele.classList.contains('current');
-        },
-        set: function(value) {
-          this.toggle(value);
-          if (this.child) {
-            this.child.toggle(value);
-          }
-        }
-      });
-      Utils.merge(Panel.prototype, {
-        _init: function() {
-          if (this.refresh) {
-            this.refresh();
-            Utils.prefs.observe(this.id, this.refresh.bind(this));
-          }
-          if (this.click) {
-            this.listeners.click = this.click.bind(this);
-            this.ele.addEventListener('click', this.listeners.click);
-          }
-        },
-        _setChild: function(child) {
-          this.child = child;
-          this.child.parent = this;
-          Object.defineProperty(this.child, 'visible', {
-            enumerable: true,
-            get: function() {
-              return this.ele.style.display != 'none';
-            },
-            set: function(value) {
-              this.toggle(value);
-              this.parent.toggle(value);
-            }
-          });
-          Utils.merge(this.child, {
-            show: function() {
-              this.toggle(true);
-            },
-            hide: function() {
-              this.toggle(false);
-            },
-            toggle: function(toShow) {
-              if (toShow === undefined) {
-                toShow = !this.visible;
-              }
-              this.ele.style.display = toShow ? '' : 'none';
-              if (this.listeners.hide) {
-                document[(toShow ? 'add' : 'remove') + 'EventListener']('click', this.listeners.hide, false);
-              }
-            }
-          });
-          if (this.child.init) {
-            this.child.init();
-          }
-        },
-        press: function() {
-          this.toggle(true);
-        },
-        release: function() {
-          this.toggle(false);
-        },
-        toggle: function(toPress) {
-          if (toPress === undefined) {
-            toPress = !this.pressed;
-          }
-          this.ele.classList[toPress ? 'add' : 'remove']('current');
-        }
-      });
-      // Generate panels
-      [{
-        id: 'lineWidth',
-        init: function() {
-          this._init();
-        },
-        refresh: function() {
-          Array.prototype.forEach.call(this.ele.getElementsByTagName('li'), function(li) {
-            li.classList[li.value == BaseControl.lineWidth ? 'add' : 'remove']('current');
-          });
-        },
-        click: function(evt) {
-          if (evt.target.nodeName == 'li') {
-            BaseControl.lineWidth = evt.target.value;
-          }
-        }
-      }, {
-        id: 'fontSize',
-        init: function() {
-          this._init();
-          this._setChild(FontSelect);
-        },
-        refresh: function() {
-          this.ele.firstChild.textContent = BaseControl.fontSize + ' px';
-        },
-        click: function(evt) {
-          this.pressed = !this.pressed;
-          self.panels.color.pressed = false;
-          evt.stopPropagation();
-        }
-      }, {
-        id: 'color',
-        init: function() {
-          this._init();
-          this._setChild(Color);
-        },
-        refresh: function() {
-          this.ele.firstChild.style.backgroundColor = Color.selected;
-        },
-        click: function(evt) {
-          this.pressed = !this.pressed;
-          self.panels.fontSize.pressed = false;
-          evt.stopPropagation();
-        }
-      }].forEach(function(options) {
-        this.panels[options.id] = new Panel(options);
-      }, this);
-
-      Object.keys(this.panels).forEach(function(id) {
-        this.panels[id].init();
-      }, this);
-
-      this.hide();
-    },
-    reposition: function() {
-      if (this.ele && this.buttonEle) {
-        this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
-      }
-    },
-    show: function(button, panelsToShow) {
-      if (button) {
-        this.buttonEle = button;
-        this.reposition();
-      }
-
-      this.ele.style.display = '';
-
-      if (panelsToShow) {
-        Object.keys(this.panels).forEach(function(id) {
-          this.panels[id].ele.style.display = panelsToShow.indexOf(id) >= 0 ? 'inline-block' : 'none';
-        }, this);
-      }
-    },
-    hide: function() {
-      this.ele.style.display = 'none';
-    }
-  },
+  floatbar: Floatbar,
   get canvas() {
     return this._canvas;
   },
