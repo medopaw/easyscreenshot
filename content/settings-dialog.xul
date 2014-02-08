@@ -22,7 +22,7 @@
       <label value="&easyscreenshot.settings.savelabel;" control="settings-choosefolder"/>
       <filefield id="settings-saveposition" flex="1" preference="pref-saveposition"/>
       <button id="settings-choosefolder" oncommand="settings.chooseSaveDir();event.stopPropagation();"
-        label="&easyscreenshot.settings.savebutton;"/>
+              label="&easyscreenshot.settings.savebutton;"/>
     </hbox>
     <checkbox label="&easyscreenshot.settings.opendirectory;" preference="pref-opendirectory"/>
   </prefpane>

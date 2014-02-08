@@ -1,27 +1,22 @@
-﻿/* This Source Code Form is subject to the terms of the Mozilla Public
+﻿/* vim: set ts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const {
-  classes: Cc,
-  interfaces: Ci,
-  utils: Cu,
-  results: Cr
-} = Components;
+const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 var settings = {
-
   _getDownloadsFolder: function(aFolder) {
     switch (aFolder) {
-      case "Desktop": {
-        let fileLoc = Cc["@mozilla.org/file/directory_service;1"]
-            .getService(Components.interfaces.nsIProperties);
-        return fileLoc.get("Desk", Ci.nsILocalFile);
+      case 'Desktop': {
+        let fileLoc = Cc['@mozilla.org/file/directory_service;1']
+                      .getService(Components.interfaces.nsIProperties);
+        return fileLoc.get('Desk', Ci.nsILocalFile);
         break;
       }
-      case "Downloads": {
-        let dnldMgr = Cc["@mozilla.org/download-manager;1"]
-            .getService(Ci.nsIDownloadManager);
+      case 'Downloads': {
+        let dnldMgr = Cc['@mozilla.org/download-manager;1']
+                      .getService(Ci.nsIDownloadManager);
         return dnldMgr.defaultDownloadsDirectory;
         break;
       }
@@ -30,28 +25,29 @@ var settings = {
   },
 
   _folderToIndex: function(aFolder) {
-    if (!aFolder || aFolder.equals(this._getDownloadsFolder("Desktop"))) {
+    if (!aFolder || aFolder.equals(this._getDownloadsFolder('Desktop'))) {
       return 0;
-    } else if (aFolder.equals(this._getDownloadsFolder("Downloads"))) {
+    } else if (aFolder.equals(this._getDownloadsFolder('Downloads'))) {
       return 1;
+    } else {
+      return 2;
     }
-    return 2;
   },
 
   _setSaveDirElem: function(aFolder) {
     let path = aFolder.path;
-    let saveDirPref = document.getElementById("pref-saveposition");
+    let saveDirPref = document.getElementById('pref-saveposition');
     saveDirPref.value = aFolder;
 
-    let saveDirElem = document.getElementById("settings-saveposition");
-    let bundlePreferences = document.getElementById("bundlePreferences");
+    let saveDirElem = document.getElementById('settings-saveposition');
+    let bundlePreferences = document.getElementById('bundlePreferences');
     switch(this._folderToIndex(aFolder)) {
       case 0: {
-        saveDirElem.label = bundlePreferences.getString("desktopFolderName");
+        saveDirElem.label = bundlePreferences.getString('desktopFolderName');
         break;
       }
       case 1: {
-        saveDirElem.label = bundlePreferences.getString("downloadsFolderName");
+        saveDirElem.label = bundlePreferences.getString('downloadsFolderName');
         break;
       }
       case 2: {
@@ -60,26 +56,27 @@ var settings = {
       }
     }
 
-    let ios = Cc["@mozilla.org/network/io-service;1"]
-        .getService(Ci.nsIIOService);
-    let fph = ios.getProtocolHandler("file")
-        .QueryInterface(Ci.nsIFileProtocolHandler);
+    let ios = Cc['@mozilla.org/network/io-service;1']
+              .getService(Ci.nsIIOService);
+    let fph = ios.getProtocolHandler('file')
+              .QueryInterface(Ci.nsIFileProtocolHandler);
     let iconUrlSpec = fph.getURLSpecFromFile(aFolder);
-    saveDirElem.image = "moz-icon://" + iconUrlSpec + "?size=16";
+    saveDirElem.image = 'moz-icon://' + iconUrlSpec + '?size=16';
   },
 
   _init: function() {
-    let saveDirPref = document.getElementById("pref-saveposition");
+    let saveDirPref = document.getElementById('pref-saveposition');
     if (!saveDirPref.value) {
-      saveDirPref.value = this._getDownloadsFolder("Desktop");
+      saveDirPref.value = this._getDownloadsFolder('Desktop');
     }
     this._setSaveDirElem(saveDirPref.value);
   },
 
   chooseSaveDir: function() {
-    let bundlePreferences = document.getElementById("bundlePreferences");
-    let title = bundlePreferences.getString("chooseDownloadFolderTitle");
-    let fp = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
+    let bundlePreferences = document.getElementById('bundlePreferences');
+    let title = bundlePreferences.getString('chooseDownloadFolderTitle');
+    let fp = Cc['@mozilla.org/filepicker;1']
+             .createInstance(Ci.nsIFilePicker);
     fp.init(window, title, Ci.nsIFilePicker.modeGetFolder);
     fp.appendFilters(Ci.nsIFilePicker.filterAll);
 
@@ -87,9 +84,8 @@ var settings = {
       this._setSaveDirElem(fp.file);
     }
   },
-
 };
 
-window.addEventListener("load", function() {
+window.addEventListener('load', function() {
   settings._init();
 }, false);
