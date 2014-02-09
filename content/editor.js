@@ -58,13 +58,13 @@ var Utils = {
           aDownloadList.add(aDownload);
           aDownload.start().then(function() {
             if (aDownload.succeeded && onsuccess) {
-              onsuccess(aDownload);
+              onsuccess();
             }
           }, function() {
             if (aDownload.error && onerror) {
-              onerror(aDownload);
+              onerror();
             } else if (aDownload.canceled && oncancel) {
-              oncancel(aDownload);
+              oncancel();
             }
           }).then(null, Cu.reportError);
         }).then(null, Cu.reportError);
@@ -124,19 +124,19 @@ var Utils = {
             switch (this.status(aDownload.state)) {
               case 'success': {
                 if (onsuccess) {
-                  onsuccess(aDownload);
+                  onsuccess();
                 }
                 break;
               }
               case 'error': {
                 if (onerror) {
-                  onerror(aDownload);
+                  onerror();
                 }
                 break;
               }
               case 'cancel': {
                 if (oncancel) {
-                  oncancel(aDownload);
+                  oncancel();
                 }
                 break;
               }
@@ -206,6 +206,7 @@ var Utils = {
             this.set(name, defaultValue);
             value = defaultValue.value;
           }
+          break;
         }
         case 'Bool':
         case 'Int':
@@ -217,6 +218,7 @@ var Utils = {
             this.set(name, defaultValue);
             value = defaultValue;
           }
+          break;
         }
       }
 
@@ -229,12 +231,15 @@ var Utils = {
       switch (type) {
         case 'Complex': {
           this._branch.setComplexValue(name, newValue.type, newValue.value);
+          break;
         }
         case 'Bool':
         case 'Int':
         case 'Char':
         default: {
+          console.log(setter);
           this._branch[setter](name, newValue);
+          break;
         }
       }
     },
@@ -1341,12 +1346,14 @@ var Editor = {
           file.parent.launch();
         }
       }
+      this.playSound('export');
+      Utils.notification.notify(Utils.strings.get('saveNotification'), {
+        body: file.parent.path
+      });
+    }, function() {
+      Utils.notification.notify(Utils.strings.get('failNotification'));
     });
 
-    this.playSound('export');
-    Utils.notification.notify(Utils.strings.get('saveNotification'), {
-      body: file.parent.path
-    });
     Utils.interrupt('window.close();');
   },
   _copyToClipboard: function() {
