@@ -509,8 +509,11 @@ var BaseControl = {
     document.removeEventListener('mouseup', this._listeners.mouseup, false);
     evt.stopPropagation();
     evt.preventDefault();
-    this._refreshImageData();
-    Editor.updateHistory();
+    if (evt.pageX - this._origRect[0] != this._startxy[0] ||
+      evt.pageY - this._origRect[1] != this._startxy[1]) {
+      this._refreshImageData();
+      Editor.updateHistory();
+    }
   },
   _refreshImageData: function() {
     var [x, y, w, h] = this._rect;
