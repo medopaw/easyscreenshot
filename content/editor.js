@@ -858,8 +858,8 @@ var Pencil = {
     this._startxy = [rx, ry];
     Editor.ctx.lineWidth = BaseControl.lineWidth;
     Editor.ctx.strokeStyle = Color.selected;
-      Editor.ctx.moveTo(rx, ry);
-      Editor.ctx.beginPath();
+    Editor.ctx.moveTo(rx, ry);
+    Editor.ctx.beginPath();
     document.addEventListener('mousemove', this._listeners.mousemove, false);
     document.addEventListener('mouseup', this._listeners.mouseup, false);
     evt.stopPropagation();
