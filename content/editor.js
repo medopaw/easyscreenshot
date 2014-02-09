@@ -870,6 +870,7 @@ var Pencil = {
     this._startxy = [rx, ry];
     Editor.ctx.lineWidth = BaseControl.lineWidth;
     Editor.ctx.strokeStyle = Color.selected;
+    Editor.ctx.fillStyle = Color.selected;
     Editor.ctx.moveTo(rx, ry);
     Editor.ctx.beginPath();
     document.addEventListener('mousemove', this._listeners.mousemove, false);
@@ -878,6 +879,14 @@ var Pencil = {
     evt.preventDefault();
   },
   _mouseup: function(evt) {
+    var rx = evt.pageX - this._origRect[0];
+    var ry = evt.pageY - this._origRect[1];
+    const FACTOR = 0.75;
+    if (rx == this._startxy[0] &&
+      ry == this._startxy[1]) {
+      Editor.ctx.arc(rx, ry, BaseControl.lineWidth * FACTOR, 0, Math.PI * 2, true);
+      Editor.ctx.fill();
+    }
     Editor.ctx.closePath();
     document.removeEventListener('mousemove', this._listeners.mousemove, false);
     document.removeEventListener('mouseup', this._listeners.mouseup, false);
