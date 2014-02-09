@@ -739,6 +739,11 @@ var TextInput = {
       this._input.style.height = initialHeight + 'px';
     });
   },
+  _keypress: function(evt) {
+    if (evt.ctrlKey && evt.keyCode == 13) { // Ctrl + Enter
+      this._blur();
+    }
+  },
   _hide: function() {
     this._input.style.display = 'none';
   },
@@ -748,7 +753,9 @@ var TextInput = {
     this._hide();
     this._listeners['blur'] = this._blur.bind(this);
     this._listeners['click'] = this._click.bind(this);
+    this._listeners['keypress'] = this._keypress.bind(this);
     this._input.addEventListener('blur', this._listeners.blur, false);
+    this._input.addEventListener('keypress', this._listeners.keypress, false);
     this._input.wrap = 'off';
     // Auto resize according to content
     this._input.addEventListener('input', function(evt) {
