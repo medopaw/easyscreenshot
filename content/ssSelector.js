@@ -862,6 +862,10 @@
       );
     };
 
+    // Reposition ssSelector-selection to current viewport
+    widget.selection.style.top = widget.root.scrollTop + 'px';
+    widget.selection.style.left = widget.root.scrollLeft + 'px';
+
     var showNotification = true;
     var prefs = Components.classes['@mozilla.org/preferences-service;1']
             .getService(Components.interfaces.nsIPrefService)

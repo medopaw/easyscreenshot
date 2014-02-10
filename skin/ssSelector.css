@@ -52,7 +52,7 @@ ssSelector-selection * {
 ssSelector-selection {
 	background: transparent;
 	border: none;
-	box-shadow: 0 0 0 10000px hsla(0, 0%, 20%, 0.8);
+	box-shadow: 0 0 0 100000px rgba(0, 0, 0, 0.6);
 	overflow: hidden;
 }
 ssSelector-btnBox ,
