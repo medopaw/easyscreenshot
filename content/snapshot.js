@@ -29,19 +29,19 @@
     }
 
     var contentWindow = window.content;
-    var document = contentWindow.document;
+    var contentDocument = contentWindow.document;
     var width, height, x, y;
     switch (part) {
       case 'visible':
-        x = document.documentElement.scrollLeft;
-        y = document.documentElement.scrollTop;
-        width = document.documentElement.clientWidth;
-        height = document.documentElement.clientHeight;
+        x = contentDocument.documentElement.scrollLeft;
+        y = contentDocument.documentElement.scrollTop;
+        width = contentDocument.documentElement.clientWidth;
+        height = contentDocument.documentElement.clientHeight;
         break;
       case 'entire':
         x = y = 0;
-        width = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth);
-        height = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+        width = Math.max(contentDocument.documentElement.scrollWidth, contentDocument.body.scrollWidth);
+        height = Math.max(contentDocument.documentElement.scrollHeight, contentDocument.body.scrollHeight);
         break;
       default:
         _logger.trace('unknown part argument')
@@ -50,7 +50,7 @@
     var canvas = null;
     var success = true;
     try {
-      canvas = document.createElementNS('http://www.w3.org/1999/xhtml', 'html:canvas');
+      canvas = contentDocument.createElementNS('http://www.w3.org/1999/xhtml', 'html:canvas');
       canvas.height = height;
       canvas.width = width;
 
@@ -62,6 +62,13 @@
       ctx.drawWindow(contentWindow, x, y, width, height, 'rgb(255,255,255)');
     } catch(err) {
       success = false;
+      if (Notification && Notification.permission === 'granted') {
+        new Notification(document.getElementById("easyscreenshot-strings")
+                                 .getString('failToCaptureNotification'), {
+          tag: 'easyscreenshot',
+          icon: 'chrome://easyscreenshot/skin/image/easyscreenshot.png'
+        });
+      }
     }
 
     if (width != canvas.width || height != canvas.height) {

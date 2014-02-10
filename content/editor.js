@@ -1370,7 +1370,7 @@ var Editor = {
         body: file.parent.path
       });
     }, function() {
-      Utils.notification.notify(Utils.strings.get('failNotification'));
+      Utils.notification.notify(Utils.strings.get('failToSaveNotification'));
     });
 
     Utils.interrupt('window.close();');
