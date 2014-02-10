@@ -452,6 +452,10 @@ var BaseControl = {
 //
 
   _dir: 1,
+  _isStartPoint: function(evt) {
+    return evt.pageX - this._origRect[0] == this._startxy[0] &&
+           evt.pageY - this._origRect[1] == this._startxy[1];
+  },
   _mousedown: function(evt) {
     var rx = evt.pageX - this._origRect[0];
     var ry = evt.pageY - this._origRect[1];
@@ -514,8 +518,7 @@ var BaseControl = {
     document.removeEventListener('mouseup', this._listeners.mouseup, false);
     evt.stopPropagation();
     evt.preventDefault();
-    if (evt.pageX - this._origRect[0] != this._startxy[0] ||
-      evt.pageY - this._origRect[1] != this._startxy[1]) {
+    if (!this._isStartPoint(evt)) {
       this._refreshImageData();
       Editor.updateHistory();
     }
@@ -879,11 +882,11 @@ var Pencil = {
     evt.preventDefault();
   },
   _mouseup: function(evt) {
-    var rx = evt.pageX - this._origRect[0];
-    var ry = evt.pageY - this._origRect[1];
-    const FACTOR = 0.75;
-    if (rx == this._startxy[0] &&
-      ry == this._startxy[1]) {
+    if (this._isStartPoint(evt)) {
+      var rx = evt.pageX - this._origRect[0];
+      var ry = evt.pageY - this._origRect[1];
+      const FACTOR = 0.75;
+
       Editor.ctx.arc(rx, ry, BaseControl.lineWidth * FACTOR, 0, Math.PI * 2, true);
       Editor.ctx.fill();
     }
