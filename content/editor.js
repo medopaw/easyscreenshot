@@ -66,9 +66,9 @@ var Utils = {
             } else if (aDownload.canceled && oncancel) {
               oncancel();
             }
-          }).then(null, Cu.reportError);
-        }).then(null, Cu.reportError);
-      });
+          }).then(null, onerror);
+        }).then(null, onerror);
+      }).then(null, onerror);
     } else {
       var ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
       var source = ios.newURI(url, 'utf8', null);
@@ -237,7 +237,6 @@ var Utils = {
         case 'Int':
         case 'Char':
         default: {
-          console.log(setter);
           this._branch[setter](name, newValue);
           break;
         }
@@ -744,7 +743,7 @@ var TextInput = {
   },
   _keypress: function(evt) {
     if (evt.ctrlKey && evt.keyCode == 13) { // Ctrl + Enter
-      this._blur();
+      this._input.blur();
     }
   },
   _hide: function() {
@@ -1369,11 +1368,11 @@ var Editor = {
       Utils.notification.notify(Utils.strings.get('saveNotification'), {
         body: file.parent.path
       });
+      Utils.interrupt('window.close();');
     }, function() {
       Utils.notification.notify(Utils.strings.get('failToSaveNotification'));
+      Utils.interrupt('window.close();');
     });
-
-    Utils.interrupt('window.close();');
   },
   _copyToClipboard: function() {
     var imagedata = this.canvas.toDataURL('image/png', '');
