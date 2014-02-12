@@ -968,19 +968,7 @@ var Panel = function(options) {
   Utils.merge(this, options);
   this.ele = Utils.qs('#button-' + this.id);
 };
-Object.defineProperty(Panel.prototype, 'pressed', {
-  enumerable: true,
-  get: function() {
-    return this.ele.classList.contains('current');
-  },
-  set: function(value) {
-    this.toggle(value);
-    if (this.child) {
-      this.child.toggle(value);
-    }
-  }
-});
-Utils.merge(Panel.prototype, {
+Panel.prototype = {
   _init: function() {
     if (this.refresh) {
       this.refresh();
@@ -1027,6 +1015,15 @@ Utils.merge(Panel.prototype, {
       this.child.init();
     }
   },
+  get pressed() {
+    return this.ele.classList.contains('current');
+  },
+  set pressed(value) {
+    this.toggle(value);
+    if (this.child) {
+      this.child.toggle(value);
+    }
+  },
   press: function() {
     this.toggle(true);
   },
@@ -1039,7 +1036,7 @@ Utils.merge(Panel.prototype, {
     }
     this.ele.classList[toPress ? 'add' : 'remove']('current');
   }
-});
+};
 
 var Floatbar = {
   ele: null,
