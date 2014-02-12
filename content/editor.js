@@ -923,6 +923,7 @@ var Pencil = {
   }
 };
 
+// The color palette to pick a color, by default hidden.
 var ColorPicker = {
   ele: null,
   listeners: {},
@@ -952,6 +953,7 @@ var ColorPicker = {
   }
 };
 
+// The dropdown list to select font size, by default hidden.
 var FontSelect = {
   ele: null,
   listeners: {},
@@ -971,6 +973,7 @@ var FontSelect = {
   }
 };
 
+// Panels are inside Floatbar, and only represent the UI part
 var Panel = function(options) {
   this.listeners = {};
   Utils.merge(this, options);
@@ -978,14 +981,19 @@ var Panel = function(options) {
 };
 Panel.prototype = {
   _init: function() {
+    // refresh() is to update display of panel according to prefs
+    // and has nothing to do with child
     if (this.refresh) {
       this.refresh();
       Utils.prefs.observe(this.id, this.refresh.bind(this));
     }
+    // click() is to called when panel (not its child) is clicked
     if (this.click) {
       this.listeners.click = this.click.bind(this);
       this.ele.addEventListener('click', this.listeners.click);
     }
+    // A panel doesn't have child if nothing pops out on click
+    // child refers to things like FontSelect and ColorPicker
     if (this.child) {
       this._initChild();
     }
@@ -1046,9 +1054,12 @@ Panel.prototype = {
   }
 };
 
+// Floatbar represents 2nd-level menubar floating above screenshot
+// and contains none or several panels
 var Floatbar = {
   ele: null,
   panels: {},
+  // Which button Floatbar is for/under
   buttonEle: null,
   init: function() {
     var self = this;
@@ -1172,7 +1183,7 @@ var Editor = {
       oldBtn.clear();
     }
     // finish() will only be called when a pressed button is clicked
-    // start() is the main task this button is binding on
+    // start() is the main task this button is binding to
     newBtn[!newBtn.simple && newID == oldID ? 'finish' : 'start']();
   },
   init: function() {
