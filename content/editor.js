@@ -108,7 +108,6 @@ var Utils = {
         ],
         status: function(state) {
           var status = ['success', 'error', 'cancel'];
-          var result = 'unknown';
           for (var i = 0; i < status.length; i++) {
             if (this[status[i]].indexOf(state) >= 0) {
               return status[i];
