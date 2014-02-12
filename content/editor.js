@@ -38,6 +38,14 @@ var Utils = {
     // Returned value is useful for anonymous objects
     return mergeTo;
   },
+  // Generate new attributes of hostObj from Class
+  // options is collection of cunstructor parameters
+  // option.id is a must, as attribute name
+  instantiate: function(Class, hostObj, options) {
+    options.forEach(function(option) {
+      hostObj[option.id] = new Class(option);
+    });
+  },
   interrupt: function(callback) {
     setTimeout(callback, 0);
   },
@@ -1047,7 +1055,7 @@ var Floatbar = {
     this.ele = Utils.qs('#floatbar');
 
     // Generate panels
-    [{
+    Utils.instantiate(Panel, this.panels, [{
       id: 'lineWidth',
       refresh: function() {
         Array.prototype.forEach.call(this.ele.getElementsByTagName('li'), function(li) {
@@ -1081,14 +1089,12 @@ var Floatbar = {
         self.panels.fontSize.pressed = false;
         evt.stopPropagation();
       }
-    }].forEach(function(options) {
-      this.panels[options.id] = new Panel(options);
-    }, this);
+    }]);
 
     // Init panels
-    Object.keys(this.panels).forEach(function(id) {
+    for (var id in this.panels) {
       this.panels[id]._init();
-    }, this);
+    }
 
     this.hide();
   },
@@ -1247,7 +1253,7 @@ var Editor = {
       // id is a must
       this.ele = Utils.qs('#button-' + this.id);
     };
-    Utils.merge(Button.prototype, {
+    Button.prototype = {
       start: function() {
         this.ele.classList.add('current');
         self._current = this.ele;
@@ -1271,9 +1277,9 @@ var Editor = {
         self.canvas.className = '';
         self._controls[this.id].cancel();
       }
-    });
+    };
     // Generate buttons
-    [{
+    Utils.instantiate(Button, this.buttons, [{
       id: 'crop',
       key: 'X',
       finish: function() {
@@ -1322,9 +1328,7 @@ var Editor = {
       key: 'Q',
       simple: true,
       start: self._cancelAndClose.bind(self)
-    }].forEach(function(options) {
-      this.buttons[options.id] = new Button(options);
-    }, this);
+    }]);
   },
   _undo: function() {
     if(this._history.length > 1) {
