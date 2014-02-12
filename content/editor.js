@@ -736,11 +736,11 @@ var TextInput = {
     this._input.focus();
 
     // Let Chinese input method put all characters first
-    Utils.interrupt(() => {
+    Utils.interrupt((function() {
       this._input.value = '';
       this._input.style.width = initialWidth + 'px';
       this._input.style.height = initialHeight + 'px';
-    });
+    }).bind(this));
   },
   _keypress: function(evt) {
     if (evt.ctrlKey && evt.keyCode == 13) { // Ctrl + Enter
