@@ -1357,6 +1357,7 @@ var Editor = {
     Utils.qs('#button-undo').setAttribute('disabled', 'true');
   },
   _saveLocal: function() {
+    var self = this;
     var file = Utils.prefs.get('savePosition', {
       type: Ci.nsILocalFile,
       value: Cc['@mozilla.org/file/directory_service;1']
@@ -1375,7 +1376,7 @@ var Editor = {
           file.parent.launch();
         }
       }
-      this.playSound('export');
+      self.playSound('export');
       Utils.notification.notify(Utils.strings.get('saveNotification'), {
         body: file.parent.path
       });
