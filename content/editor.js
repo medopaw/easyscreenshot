@@ -505,7 +505,7 @@ var BaseControl = {
     this._canvas.width = dw;
     this._canvas.height = dh;
     this._ctx.lineWidth = this.lineWidth;
-    this._ctx.strokeStyle = Color.selected;
+    this._ctx.strokeStyle = ColorPicker.selected;
     this._ctx.save();
     this._stroke(this._ctx, dx, dy, w, h);
     evt.stopPropagation();
@@ -524,7 +524,7 @@ var BaseControl = {
   _refreshImageData: function() {
     var [x, y, w, h] = this._rect;
     Editor.ctx.lineWidth = this.lineWidth;
-    Editor.ctx.strokeStyle = Color.selected;
+    Editor.ctx.strokeStyle = ColorPicker.selected;
     Editor.ctx.save();
     this._stroke(Editor.ctx, x, y, w, h);
   },
@@ -726,8 +726,8 @@ var TextInput = {
     this._input.style.maxHeight = maxHeight + 'px';
 
     // Set text color and transparent border
-    this._input.style.color = Color.selected;
-    this._input.style.borderColor = Utils.hex2rgba(Color.selected, 0.5);
+    this._input.style.color = ColorPicker.selected;
+    this._input.style.borderColor = Utils.hex2rgba(ColorPicker.selected, 0.5);
 
     // Show and focus on the text input
     this._input.style.display = '';
@@ -870,8 +870,8 @@ var Pencil = {
     var ry = evt.pageY - this._origRect[1];
     this._startxy = [rx, ry];
     Editor.ctx.lineWidth = BaseControl.lineWidth;
-    Editor.ctx.strokeStyle = Color.selected;
-    Editor.ctx.fillStyle = Color.selected;
+    Editor.ctx.strokeStyle = ColorPicker.selected;
+    Editor.ctx.fillStyle = ColorPicker.selected;
     Editor.ctx.moveTo(rx, ry);
     Editor.ctx.beginPath();
     document.addEventListener('mousemove', this._listeners.mousemove, false);
@@ -915,7 +915,7 @@ var Pencil = {
   }
 };
 
-var Color = {
+var ColorPicker = {
   ele: null,
   listeners: {},
   usePrefix: false,
@@ -1072,9 +1072,9 @@ var Floatbar = {
       }
     }, {
       id: 'color',
-      child: Color,
+      child: ColorPicker,
       refresh: function() {
-        this.ele.firstChild.style.backgroundColor = Color.selected;
+        this.ele.firstChild.style.backgroundColor = ColorPicker.selected;
       },
       click: function(evt) {
         this.pressed = !this.pressed;
