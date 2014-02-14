@@ -82,7 +82,7 @@ var Utils = {
       var source = ios.newURI(url, 'utf8', null);
       var file = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile);
       file.initWithPath(path);
-      var target = ios.newFileURI(file);
+      var target = ios.newFileURI(file).QueryInterface(Ci.nsIFileURL);
 
       var persist = Cc['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].
               createInstance(Ci.nsIWebBrowserPersist);
@@ -90,7 +90,7 @@ var Utils = {
                  | Ci.nsIWebBrowserPersist.PERSIST_FLAGS_AUTODETECT_APPLY_CONVERSION;
 
       var downloadManager = Cc['@mozilla.org/download-manager;1'].getService(Ci.nsIDownloadManager);
-      var download = downloadManager.addDownload(Ci.nsIDownload.DOWNLOAD_TYPE_DOWNLOAD,
+      var theDownload = downloadManager.addDownload(Ci.nsIDownload.DOWNLOAD_TYPE_DOWNLOAD,
         source, target, '', null, null, null, persist, null);
       var downloadProgressListener = {
         complete: [
@@ -123,9 +123,9 @@ var Utils = {
           }
           return 'unknown';
         },
-        onDownloadStateChange: function(a, aDownload) {
-          if (decodeURI(aDownload.source.spec) == decodeURI(source.spec) &&
-            decodeURI(aDownload.targetFile.path) == decodeURI(target.path) &&
+        onDownloadStateChange: function(aPrevState, aDownload) {
+          if (aDownload.source.spec == source.spec &&
+            aDownload.targetFile.path == target.file.path &&
             this.complete.indexOf(aDownload.state) >= 0) {
             downloadManager.removeListener(downloadProgressListener);
             switch (this.status(aDownload.state)) {
@@ -152,10 +152,15 @@ var Utils = {
               }
             }
           }
-        }
+        },
+        // These blank functions are to prevent exceptions.
+        // See https://developer.mozilla.org/en-US/docs/XPCOM_Interface_Reference/nsIDownloadProgressListener#Example
+        onSecurityChange: function(prog, req, state, dl) {},
+        onProgressChange: function(prog, req, prog, progMax, tProg, tProgMax, dl) {},
+        onStateChange: function(prog, req, flags, status, dl) {}
       };
       downloadManager.addListener(downloadProgressListener);
-      persist.progressListener = download;
+      persist.progressListener = theDownload;
 
       persist.saveURI(source, null, null, null, null, target, null);
     }
@@ -253,24 +258,10 @@ var Utils = {
       this._branch.addObserver(name, {observe: callback}, false);
     }
   },
-  notification: {
-    check: function() {
-      if (Notification && Notification.permission !== 'granted') {
-        Notification.requestPermission(function(status) {
-          if (Notification.permission !== status) {
-            Notification.permission = status;
-          }
-        });
-      }
-    },
-    notify: function(msg, options) {
-      if (Notification && Notification.permission === 'granted') {
-        new Notification(msg, Utils.merge({
-          tag: 'easyscreenshot',
-          icon: 'chrome://easyscreenshot/skin/image/easyscreenshot.png'
-        }, options || {}));
-      }
-    }
+  notify: function(title, text) {
+    Cc["@mozilla.org/alerts-service;1"]
+      .getService(Ci.nsIAlertsService)
+      .showAlertNotification("chrome://easyscreenshot/skin/image/easyscreenshot.png", title, text);
   },
   // e.g. (#FFFFFF, 0.5) => (255, 255, 255, 0.5)
   hex2rgba: function(hex, alpha) {
@@ -1377,12 +1368,10 @@ var Editor = {
         }
       }
       self.playSound('export');
-      Utils.notification.notify(Utils.strings.get('saveNotification'), {
-        body: file.parent.path
-      });
+      Utils.notify(Utils.strings.get('saveNotification'), file.parent.path);
       Utils.interrupt('window.close();');
     }, function() {
-      Utils.notification.notify(Utils.strings.get('failToSaveNotification'));
+      Utils.notify(Utils.strings.get('failToSaveNotification'));
       Utils.interrupt('window.close();');
     });
   },
@@ -1406,7 +1395,7 @@ var Editor = {
     Services.clipboard.setData(trans, null, Ci.nsIClipboard.kGlobalClipboard);
 
     this.playSound('export');
-    Utils.notification.notify(Utils.strings.get('copyNotification'));
+    Utils.notify(Utils.strings.get('copyNotification'));
     Utils.interrupt('window.close();');
   },
   _cancelAndClose: function() {
@@ -1425,7 +1414,6 @@ var Editor = {
 
 window.addEventListener('load', function(evt) {
   Editor.init();
-  Utils.notification.check();
 }, false);
 
 window.addEventListener('resize', function(evt) {
