@@ -735,10 +735,10 @@
     widget.root.appendChild(widget.overlay);
 
 
-//      widget.selection.style.height = (widget.window.innerHeight * 0.33) + 'px';
-//      widget.selection.style.left = (widget.window.innerWidth * 0.33) + 'px';
-//      widget.selection.style.top = (widget.root.scrollTop + (widget.window.innerHeight * 0.33)) + 'px';
-//      widget.selection.style.width = (widget.window.innerWidth * 0.33) + 'px';
+//    widget.selection.style.height = (widget.window.innerHeight * 0.33) + 'px';
+//    widget.selection.style.left = (widget.window.innerWidth * 0.33) + 'px';
+//    widget.selection.style.top = (widget.root.scrollTop + (widget.window.innerHeight * 0.33)) + 'px';
+//    widget.selection.style.width = (widget.window.innerWidth * 0.33) + 'px';
 
     widget.root.appendChild(widget.selection);
     widget.selection.appendChild(widget.selection_inner);
