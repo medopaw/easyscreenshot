@@ -933,7 +933,7 @@ window.ssInstalled = true;
       this._listeners.hide = (function() {
         this.visible = false;
       }).bind(this);
-      this.ele.addEventListener('select', this._select.bind(this));
+      this.ele.addEventListener('select', this.select.bind(this));
 
       // Hide colorpicker
       this.hide();
@@ -943,14 +943,13 @@ window.ssInstalled = true;
   // The dropdown list to select font size, by default hidden.
   var FontSelect = {
     ele: null,
-    listeners: {},
+    _listeners: {},
     init: function() {
       this.ele = Utils.qs('#button-fontSize').appendChild(Utils.qs('#fontselect'));
-      this.listeners.click = this.click.bind(this);
-      this.listeners.hide = (function() {
+      this._listeners.hide = (function() {
         this.visible = false;
       }).bind(this);
-      this.ele.addEventListener('click', this.listeners.click);
+      this.ele.addEventListener('click', this.click.bind(this));
       this.hide();
     },
     click: function(evt) {
@@ -962,7 +961,7 @@ window.ssInstalled = true;
 
   // Panels are inside Floatbar, and only represent the UI part
   var Panel = function(options) {
-    this.listeners = {};
+    this._listeners = {};
     Utils.extend(this, options);
     this.ele = Utils.qs('#button-' + this.id);
   };
@@ -976,8 +975,8 @@ window.ssInstalled = true;
       }
       // click() is to called when panel (not its child) is clicked
       if (this.click) {
-        this.listeners.click = this.click.bind(this);
-        this.ele.addEventListener('click', this.listeners.click);
+        this._listeners.click = this.click.bind(this);
+        this.ele.addEventListener('click', this._listeners.click);
       }
       // A panel doesn't have child if nothing pops out on click
       // child refers to things like FontSelect and ColorPicker
@@ -1009,8 +1008,12 @@ window.ssInstalled = true;
             toShow = !this.visible;
           }
           this.ele.style.display = toShow ? '' : 'none';
-          if (this.listeners.hide) {
-            document[(toShow ? 'add' : 'remove') + 'EventListener']('click', this.listeners.hide);
+          if (this._listeners.hide) {
+            if (toShow) {
+              document.addEventListener('click', this._listeners.hide);
+            } else {
+              document.removeEventListener('click', this._listeners.hide);
+            }
           }
         }
       });
