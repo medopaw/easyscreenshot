@@ -674,10 +674,10 @@ window.ssInstalled = true;
       this._canvas.height = h;
 
       // Hide floatbar temporarily to avoid overlapping
-      Editor.floatbar.hide();
+      Floatbar.hide();
       this._ctx.drawWindow(window.content, x + window.scrollX, y + window.scrollY, w, h, 'rgb(255,255,255)');
       // Show floatbar again after capturing text area
-      Editor.floatbar.show();
+      Floatbar.show();
 
       var canvasRect = Editor.canvas.getBoundingClientRect();
       Editor.ctx.putImageData(this._ctx.getImageData(0, 0, w, h), x - canvasRect.left, y - canvasRect.top);
@@ -1126,6 +1126,39 @@ window.ssInstalled = true;
     }
   };
 
+  // Define button structure
+  var Button = function(options) {
+    Utils.extend(this, options);
+    // id is a must
+    this.ele = Utils.qs('#button-' + this.id);
+  };
+  Button.prototype = {
+    start: function() {
+      this.ele.classList.add('current');
+      Editor._current = this.ele;
+      if (this.floatbar) {
+        Floatbar.show(this.ele, this.floatbar);
+      }
+      var canvas = Editor.canvas;
+      Editor._controls[this.id].start(
+        parseInt(canvas.offsetLeft, 10),
+        parseInt(canvas.offsetTop, 10),
+        parseInt(canvas.offsetWidth, 10),
+        parseInt(canvas.offsetHeight, 10)
+      );
+    },
+    finish: function() {},
+    clear: function() {
+      Editor._current.classList.remove('current');
+      Editor._current = null;
+      if (this.floatbar) {
+        Floatbar.hide();
+      }
+      Editor.canvas.className = '';
+      Editor._controls[this.id].cancel();
+    }
+  };
+
   const HISTORY_LENGHT_MAX = 50;
   var Editor = {
     _controls: {
@@ -1142,7 +1175,6 @@ window.ssInstalled = true;
     _current: null,
     _history: [],
     buttons: {},
-    floatbar: Floatbar,
     get canvas() {
       return this._canvas;
     },
@@ -1195,7 +1227,7 @@ window.ssInstalled = true;
       this.updateHistory();
       this._disableUndo();
       this._setupToolbar();
-      this.floatbar.init();
+      Floatbar.init();
 
       document.body.addEventListener('keypress', function(evt) {
         if (evt.keyCode == 27) { // Esc
@@ -1245,49 +1277,17 @@ window.ssInstalled = true;
       this._setupButtons();
     },
     _setupButtons: function() {
-      var self = this;
       // Define floatbar types to avoid repetition
       var floatbars = {
         line: ['lineWidth', 'color'],
         text: ['fontSize', 'color']
-      };
-      // Define button structure
-      var Button = function(options) {
-        Utils.extend(this, options);
-        // id is a must
-        this.ele = Utils.qs('#button-' + this.id);
-      };
-      Button.prototype = {
-        start: function() {
-          this.ele.classList.add('current');
-          self._current = this.ele;
-          if (this.floatbar) {
-            self.floatbar.show(this.ele, this.floatbar);
-          }
-          self._controls[this.id].start(
-            parseInt(self.canvas.offsetLeft, 10),
-            parseInt(self.canvas.offsetTop, 10),
-            parseInt(self.canvas.offsetWidth, 10),
-            parseInt(self.canvas.offsetHeight, 10)
-          );
-        },
-        finish: function() {},
-        clear: function() {
-          self._current.classList.remove('current');
-          self._current = null;
-          if (this.floatbar) {
-            self.floatbar.hide();
-          }
-          self.canvas.className = '';
-          self._controls[this.id].cancel();
-        }
       };
       // Generate buttons
       Utils.instantiate(Button, this.buttons, [{
         id: 'crop',
         key: 'X',
         finish: function() {
-          self._controls.crop.stop();
+          Editor._controls.crop.stop();
         }
       }, {
         id: 'rectangle',
@@ -1316,22 +1316,22 @@ window.ssInstalled = true;
         id: 'undo',
         key: 'Z',
         simple: true,
-        start: self._undo.bind(self)
+        start: Editor._undo.bind(Editor)
       }, {
         id: 'local',
         key: 'S',
         simple: true,
-        start: self._saveLocal.bind(self)
+        start: Editor._saveLocal.bind(Editor)
       }, {
         id: 'copy',
         key: 'C',
         simple: true,
-        start: self._copyToClipboard.bind(self)
+        start: Editor._copyToClipboard.bind(Editor)
       }, {
         id: 'cancel',
         key: 'Q',
         simple: true,
-        start: self._cancelAndClose.bind(self)
+        start: Editor._cancelAndClose.bind(Editor)
       }]);
     },
     _undo: function() {
@@ -1419,7 +1419,7 @@ window.ssInstalled = true;
   });
 
   window.addEventListener('resize', function(evt) {
-    Editor.floatbar.reposition();
+    Floatbar.reposition();
     CropOverlay.reposition();
   });
 })();
