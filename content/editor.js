@@ -4,8 +4,11 @@ window.ssInstalled = true;
 (function() {
   const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-  Cu.import('resource://gre/modules/Services.jsm');
-  Cu.import('resource://easyscreenshot/snapshot.js');
+  Cu.import('resource://gre/modules/XPCOMUtils.jsm');
+  XPCOMUtils.defineLazyModuleGetter(this, 'Services',
+    'resource://gre/modules/Services.jsm');
+  XPCOMUtils.defineLazyModuleGetter(this, 'SnapshotStorage',
+    'resource://easyscreenshot/snapshot.js');
 
   var Utils = {
     parse: function(element) {
@@ -25,18 +28,13 @@ window.ssInstalled = true;
         return [].some.call(node.children, function(n) n == otherNode);
       }
     },
-    /* Copy all attributes of one object into another. Very useful. */
-    merge: function(mergeTo, mergeFrom) {
-      var bothAreObjects = [mergeTo, mergeFrom].every(function(value) {
-        return typeof value == 'object';
-      });
-      if (bothAreObjects) {
-        Object.keys(mergeFrom).forEach(function(key) {
-          mergeTo[key] = mergeFrom[key];
-        });
+    /* Copy all attributes of one object into another */
+    extend: function(dst, src, preserveExisting) {
+      for (var i in src) {
+        if (!preserveExisting || dst[i] === undefined)
+        dst[i] = src[i];
       }
-      // Returned value is useful for anonymous objects
-      return mergeTo;
+      return dst;
     },
     /* Generate new attributes of hostObj from Class
        options is collection of cunstructor parameters
@@ -46,6 +44,7 @@ window.ssInstalled = true;
         hostObj[option.id] = new Class(option);
       });
     },
+    /* Use callback to wait for main loop to finish its job */
     interrupt: function(callback) {
       setTimeout(callback, 0);
     },
@@ -317,8 +316,8 @@ window.ssInstalled = true;
       } else {
         this._status.isNew = [rx, ry];
       }
-      document.addEventListener('mousemove', this._listeners.mousemove, false);
-      document.addEventListener('mouseup', this._listeners.mouseup, false);
+      document.addEventListener('mousemove', this._listeners.mousemove);
+      document.addEventListener('mouseup', this._listeners.mouseup);
       evt.stopPropagation();
       evt.preventDefault();
     },
@@ -405,10 +404,10 @@ window.ssInstalled = true;
         left:  Utils.qs('#cropleft'),
         target:  Utils.qs('#croptarget'),
       };
-      this._listeners['dblclick'] = this._dblclick.bind(this);
-      this._listeners['mousedown'] = this._mousedown.bind(this);
-      this._listeners['mousemove'] = this._mousemove.bind(this);
-      this._listeners['mouseup'] = this._mouseup.bind(this);
+      this._listeners.dblclick = this._dblclick.bind(this);
+      this._listeners.mousedown = this._mousedown.bind(this);
+      this._listeners.mousemove = this._mousemove.bind(this);
+      this._listeners.mouseup = this._mouseup.bind(this);
       this._hide();
     },
     reposition: function() {
@@ -418,13 +417,13 @@ window.ssInstalled = true;
     },
     start: function(x, y, w, h) {
       this._display(x, y, w, h, 0, 0, 0, 0);
-      this._overlay.overlay.addEventListener('dblclick', this._listeners.dblclick, false);
-      this._overlay.overlay.addEventListener('mousedown', this._listeners.mousedown, false);
+      this._overlay.overlay.addEventListener('dblclick', this._listeners.dblclick);
+      this._overlay.overlay.addEventListener('mousedown', this._listeners.mousedown);
     },
     cancel: function() {
       this._hide();
-      this._overlay.overlay.removeEventListener('dblclick', this._listeners.dblclick, false);
-      this._overlay.overlay.removeEventListener('mousedown', this._listeners.mousedown, false);
+      this._overlay.overlay.removeEventListener('dblclick', this._listeners.dblclick);
+      this._overlay.overlay.removeEventListener('mousedown', this._listeners.mousedown);
     },
     stop: function() {
       this._refreshImageData();
@@ -457,8 +456,8 @@ window.ssInstalled = true;
       var rx = evt.pageX - this._origRect[0];
       var ry = evt.pageY - this._origRect[1];
       this._startxy = [rx, ry];
-      document.addEventListener('mousemove', this._listeners.mousemove, false);
-      document.addEventListener('mouseup', this._listeners.mouseup, false);
+      document.addEventListener('mousemove', this._listeners.mousemove);
+      document.addEventListener('mouseup', this._listeners.mouseup);
       evt.stopPropagation();
       evt.preventDefault();
     },
@@ -511,8 +510,8 @@ window.ssInstalled = true;
       evt.preventDefault();
     },
     _mouseup: function(evt) {
-      document.removeEventListener('mousemove', this._listeners.mousemove, false);
-      document.removeEventListener('mouseup', this._listeners.mouseup, false);
+      document.removeEventListener('mousemove', this._listeners.mousemove);
+      document.removeEventListener('mouseup', this._listeners.mouseup);
       evt.stopPropagation();
       evt.preventDefault();
       if (!this._isStartPoint(evt)) {
@@ -546,9 +545,9 @@ window.ssInstalled = true;
       }
     },
     init: function() {
-      this._listeners['mousedown'] = this._mousedown.bind(this);
-      this._listeners['mousemove'] = this._mousemove.bind(this);
-      this._listeners['mouseup'] = this._mouseup.bind(this);
+      this._listeners.mousedown = this._mousedown.bind(this);
+      this._listeners.mousemove = this._mousemove.bind(this);
+      this._listeners.mouseup = this._mouseup.bind(this);
     },
     start: function(x, y, w, h, canvasId, evtName) {
       if (!evtName) {
@@ -565,12 +564,12 @@ window.ssInstalled = true;
       this._canvas.style.top = y + 'px';
       this._canvas.width = 0;
       this._canvas.height = 0;
-      this._canvas.addEventListener(evtName, this._listeners[evtName], false);
-      Editor.canvas.addEventListener(evtName, this._listeners[evtName], false);
+      this._canvas.addEventListener(evtName, this._listeners[evtName]);
+      Editor.canvas.addEventListener(evtName, this._listeners[evtName]);
     },
     cancel: function() {
-      this._canvas.removeEventListener('mousedown', this._listeners.mousedown, false);
-      Editor.canvas.removeEventListener('mousedown', this._listeners.mousedown, false);
+      this._canvas.removeEventListener('mousedown', this._listeners.mousedown);
+      Editor.canvas.removeEventListener('mousedown', this._listeners.mousedown);
       document.body.removeChild(this._canvas);
     }
   };
@@ -751,11 +750,9 @@ window.ssInstalled = true;
       var self = this;
       this._input = Utils.qs('#textinput');
       this._hide();
-      this._listeners['blur'] = this._blur.bind(this);
-      this._listeners['click'] = this._click.bind(this);
-      this._listeners['keypress'] = this._keypress.bind(this);
-      this._input.addEventListener('blur', this._listeners.blur, false);
-      this._input.addEventListener('keypress', this._listeners.keypress, false);
+      this._listeners.click = this._click.bind(this);
+      this._input.addEventListener('blur', this._blur.bind(this));
+      this._input.addEventListener('keypress', this._keypress.bind(this));
       this._input.wrap = 'off';
       // Auto resize according to content
       this._input.addEventListener('input', function(evt) {
@@ -765,7 +762,7 @@ window.ssInstalled = true;
         // And then extend to scroll size
         this.style.height = self._size.minHeight + 'px';
         this.style.height = this.scrollHeight + 'px';
-      }, false);
+      });
       // Disallow scroll. Make sure content on screen doesn't scroll away.
       this._input.addEventListener('scroll',function(evt) {
         this.scrollTop = 0;
@@ -777,8 +774,8 @@ window.ssInstalled = true;
     },
     cancel: function() {
       this._input.value = '';
-      this._canvas.removeEventListener('click', this._listeners.click, false);
-      Editor.canvas.removeEventListener('click', this._listeners.click, false);
+      this._canvas.removeEventListener('click', this._listeners.click);
+      Editor.canvas.removeEventListener('click', this._listeners.click);
       document.body.removeChild(this._canvas);
       this._hide();
     }
@@ -873,8 +870,8 @@ window.ssInstalled = true;
       Editor.ctx.fillStyle = ColorPicker.selected;
       Editor.ctx.moveTo(rx, ry);
       Editor.ctx.beginPath();
-      document.addEventListener('mousemove', this._listeners.mousemove, false);
-      document.addEventListener('mouseup', this._listeners.mouseup, false);
+      document.addEventListener('mousemove', this._listeners.mousemove);
+      document.addEventListener('mouseup', this._listeners.mouseup);
       evt.stopPropagation();
       evt.preventDefault();
     },
@@ -888,8 +885,8 @@ window.ssInstalled = true;
         Editor.ctx.fill();
       }
       Editor.ctx.closePath();
-      document.removeEventListener('mousemove', this._listeners.mousemove, false);
-      document.removeEventListener('mouseup', this._listeners.mouseup, false);
+      document.removeEventListener('mousemove', this._listeners.mousemove);
+      document.removeEventListener('mouseup', this._listeners.mouseup);
       evt.stopPropagation();
       evt.preventDefault();
       this._refreshImageData();
@@ -917,7 +914,7 @@ window.ssInstalled = true;
   // The color palette to pick a color, by default hidden.
   var ColorPicker = {
     ele: null,
-    listeners: {},
+    _listeners: {},
     usePrefix: false,
     get selected() {
       return Utils.prefs.get('color', '#FF0000');
@@ -933,11 +930,10 @@ window.ssInstalled = true;
       this.ele = document.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'colorpicker');
       this.ele.id = 'colorpicker';
       this.parent.ele.appendChild(this.ele);
-      this.listeners.select = this.select.bind(this);
-      this.listeners.hide = (function() {
+      this._listeners.hide = (function() {
         this.visible = false;
       }).bind(this);
-      this.ele.addEventListener('select', this.listeners.select, false);
+      this.ele.addEventListener('select', this._select.bind(this));
 
       // Hide colorpicker
       this.hide();
@@ -954,7 +950,7 @@ window.ssInstalled = true;
       this.listeners.hide = (function() {
         this.visible = false;
       }).bind(this);
-      this.ele.addEventListener('click', this.listeners.click, false);
+      this.ele.addEventListener('click', this.listeners.click);
       this.hide();
     },
     click: function(evt) {
@@ -967,7 +963,7 @@ window.ssInstalled = true;
   // Panels are inside Floatbar, and only represent the UI part
   var Panel = function(options) {
     this.listeners = {};
-    Utils.merge(this, options);
+    Utils.extend(this, options);
     this.ele = Utils.qs('#button-' + this.id);
   };
   Panel.prototype = {
@@ -1001,7 +997,7 @@ window.ssInstalled = true;
           this.parent.toggle(value);
         }
       });
-      Utils.merge(this.child, {
+      Utils.extend(this.child, {
         show: function() {
           this.toggle(true);
         },
@@ -1014,7 +1010,7 @@ window.ssInstalled = true;
           }
           this.ele.style.display = toShow ? '' : 'none';
           if (this.listeners.hide) {
-            document[(toShow ? 'add' : 'remove') + 'EventListener']('click', this.listeners.hide, false);
+            document[(toShow ? 'add' : 'remove') + 'EventListener']('click', this.listeners.hide);
           }
         }
       });
@@ -1060,7 +1056,11 @@ window.ssInstalled = true;
         id: 'lineWidth',
         refresh: function() {
           Array.prototype.forEach.call(this.ele.getElementsByTagName('li'), function(li) {
-            li.classList[li.value == BaseControl.lineWidth ? 'add' : 'remove']('current');
+            if (li.value == BaseControl.lineWidth) {
+              li.classList.add('current');
+            } else {
+              li.classList.remove('current');
+            }
           });
         },
         click: function(evt) {
@@ -1213,7 +1213,7 @@ window.ssInstalled = true;
             return found;
           }) : false;
         });
-      }, false);
+      });
       [CropOverlay, Rect, Line, Pencil, Circ, TextInput, Blur].forEach(function(control) {
         control.init();
       });
@@ -1237,7 +1237,7 @@ window.ssInstalled = true;
       [].forEach.call(document.querySelectorAll('#toolbar > li'), function(li) {
         li.addEventListener('click', function(evt) {
           self.current = evt.target;
-        }, false);
+        });
       });
       this._setupButtons();
     },
@@ -1250,7 +1250,7 @@ window.ssInstalled = true;
       };
       // Define button structure
       var Button = function(options) {
-        Utils.merge(this, options);
+        Utils.extend(this, options);
         // id is a must
         this.ele = Utils.qs('#button-' + this.id);
       };
@@ -1413,10 +1413,10 @@ window.ssInstalled = true;
 
   window.addEventListener('load', function(evt) {
     Editor.init();
-  }, false);
+  });
 
   window.addEventListener('resize', function(evt) {
     Editor.floatbar.reposition();
     CropOverlay.reposition();
-  }, false);
+  });
 })();
