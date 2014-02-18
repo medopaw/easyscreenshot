@@ -1004,24 +1004,20 @@ window.ssInstalled = true;
   Panel.prototype = {
     _init: function() {
       // refresh() is to update display of panel according to prefs
-      // and has nothing to do with child
       if (this.refresh) {
         this.refresh();
         Utils.prefs.observe(this.id, this.refresh.bind(this));
       }
-      // click() is called when panel (not its child) is clicked
       if (this.click) {
         this._listeners.click = this.click.bind(this);
         this._ele.addEventListener('click', this._listeners.click);
       }
-      // A panel doesn't have child if nothing pops out on click
-      // child refers to things like FontSelect and ColorPicker
-      this._initChild();
+      this._initPopup();
     },
-    _initChild: function() {
-      if (this.child) {
-        this.child.init();
-        this._ele.appendChild(this.child._ele);
+    _initPopup: function() {
+      if (this.popup) {
+        this.popup.init();
+        this._ele.appendChild(this.popup._ele);
       }
     },
     get pressed() {
