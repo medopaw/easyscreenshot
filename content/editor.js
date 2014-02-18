@@ -50,6 +50,11 @@ window.ssInstalled = true;
     interrupt: function(callback) {
       setTimeout(callback, 0);
     },
+    assert: function(condition, message) {
+      if (!condition) {
+        throw new Error(message);
+      }
+    },
     /* Simple downloading tool function */
     download: function(url, path, onsuccess, onerror, oncancel) {
       var jsm = {};
@@ -260,9 +265,9 @@ window.ssInstalled = true;
       }
     },
     notify: function(title, text) {
-      Cc["@mozilla.org/alerts-service;1"]
+      Cc['@mozilla.org/alerts-service;1']
         .getService(Ci.nsIAlertsService)
-        .showAlertNotification("chrome://easyscreenshot/skin/image/easyscreenshot.png", title, text);
+        .showAlertNotification('chrome://easyscreenshot/skin/image/easyscreenshot.png', title, text);
     },
     /* e.g. (#FFFFFF, 0.5) => (255, 255, 255, 0.5) */
     hex2rgba: function(hex, alpha) {
@@ -918,9 +923,7 @@ window.ssInstalled = true;
     _ele: null,
     _listeners: {},
     _init: function() {
-      this._listeners.hide = (function() {
-        this.visible = false;
-      }).bind(this);
+      this._listeners.hide = () => this.visible = false;
     },
     get visible() {
       return this._ele.style.display != 'none';
@@ -986,32 +989,28 @@ window.ssInstalled = true;
     }
   };
 
-  // Panels are inside Floatbar, and only represent the UI part
-  var Panel = function(options) {
-    this._listeners = {};
+  // BarItem are inside Floatbar, and only represent the UI part
+  var BarItem = function(options) {
     Utils.extend(this, options);
     /* this._options = Utils.extend({
       id: null,
       refresh: Utils.emptyFunction,
       click: Utils.emptyFunction,
-      child: null
+      popup: null
     }, options);*/
-    if (!this.id) {
-      throw new Error("id is mandatory");
-    }
+    Utils.assert(this.id, 'id is mandatory');
     this._ele = Utils.qs('#button-' + this.id);
   };
-  Panel.prototype = {
+  BarItem.prototype = {
     _init: function() {
-      // refresh() is to update display of panel according to prefs
-      if (this.refresh) {
-        this.refresh();
-        Utils.prefs.observe(this.id, this.refresh.bind(this));
-      }
-      if (this.click) {
-        this._listeners.click = this.click.bind(this);
-        this._ele.addEventListener('click', this._listeners.click);
-      }
+      // refresh() is to update display of item according to prefs
+      Utils.assert(this.refresh, 'refresh method is mandatory');
+      this.refresh();
+      Utils.prefs.observe(this.id, this.refresh.bind(this));
+
+      Utils.assert(this.click, 'click method is mandatory');
+      this._ele.addEventListener('click', this.click.bind(this));
+
       this._initPopup();
     },
     _initPopup: function() {
@@ -1025,8 +1024,8 @@ window.ssInstalled = true;
     },
     set pressed(value) {
       this.toggle(value);
-      if (this.child) {
-        this.child.toggle(value);
+      if (this.popup) {
+        this.popup.toggle(value);
       }
     },
     press: function() {
@@ -1044,17 +1043,17 @@ window.ssInstalled = true;
   };
 
   // Floatbar represents 2nd-level menubar floating above screenshot
-  // and contains none or several panels
+  // and contains none or several items
   var Floatbar = {
     _ele: null,
-    panels: {},
-    buttonEle: null, // Which button Floatbar is for/under
+    items: {},
+    anchorEle: null, // Which button Floatbar is for/under
     init: function() {
       var self = this;
       this._ele = Utils.qs('#floatbar');
 
-      // Generate panels
-      Utils.instantiate(Panel, this.panels, [{
+      // Generate items
+      Utils.instantiate(BarItem, this.items, [{
         id: 'lineWidth',
         refresh: function() {
           Array.prototype.forEach.call(this._ele.getElementsByTagName('li'), function(li) {
@@ -1068,51 +1067,51 @@ window.ssInstalled = true;
         }
       }, {
         id: 'fontSize',
-        child: FontSelect,
+        popup: FontSelect,
         refresh: function() {
           this._ele.firstChild.textContent = BaseControl.fontSize + ' px';
         },
         click: function(evt) {
           this.pressed = !this.pressed;
-          self.panels.color.pressed = false;
+          self.items.color.pressed = false;
           evt.stopPropagation();
         }
       }, {
         id: 'color',
-        child: ColorPicker,
+        popup: ColorPicker,
         refresh: function() {
           this._ele.firstChild.style.backgroundColor = ColorPicker.selected;
         },
         click: function(evt) {
           this.pressed = !this.pressed;
-          self.panels.fontSize.pressed = false;
+          self.items.fontSize.pressed = false;
           evt.stopPropagation();
         }
       }]);
 
-      // Init panels
-      for (var id in this.panels) {
-        this.panels[id]._init();
+      // Init items
+      for (var id in this.items) {
+        this.items[id]._init();
       }
 
       this.hide();
     },
     reposition: function() {
-      if (this._ele && this.buttonEle) {
-        this._ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
+      if (this._ele && this.anchorEle) {
+        this._ele.style.left = this.anchorEle.getBoundingClientRect().left + 'px';
       }
     },
-    show: function(button, panelsToShow) {
-      if (button) {
-        this.buttonEle = button;
+    show: function(buttonEle, itemsToShow) {
+      if (buttonEle) {
+        this.anchorEle = buttonEle;
         this.reposition();
       }
 
       this._ele.style.display = '';
 
-      if (panelsToShow) {
-        Object.keys(this.panels).forEach(function(id) {
-          this.panels[id]._ele.style.display = panelsToShow.indexOf(id) >= 0 ? 'inline-block' : 'none';
+      if (itemsToShow) {
+        Object.keys(this.items).forEach(function(id) {
+          this.items[id]._ele.style.display = itemsToShow.indexOf(id) >= 0 ? 'inline-block' : 'none';
         }, this);
       }
     },
