@@ -28,7 +28,9 @@ window.ssInstalled = true;
         return [].some.call(node.children, function(n) n == otherNode);
       }
     },
-    /* Copy all attributes of one object into another */
+    emptyFunction: function() {},
+    /* Copy all attributes of one object into another
+     * No error thrown if src is undefined */
     extend: function(dst, src, preserveExisting) {
       for (var i in src) {
         if (!preserveExisting || dst[i] === undefined)
@@ -911,10 +913,40 @@ window.ssInstalled = true;
     }
   };
 
+  // Base class of ColorPicker & FontSelect
+  var BarPopup = {
+    _ele: null,
+    _listeners: {},
+    _init: function() {
+      this._listeners.hide = (function() {
+        this.visible = false;
+      }).bind(this);
+    },
+    get visible() {
+      return this._ele.style.display != 'none';
+    },
+    set visible(value) {
+      this.toggle(value);
+      this.parent.toggle(value);
+    },
+    show: function() {
+      this.toggle(true);
+    },
+    hide: function() {
+      this.toggle(false);
+    },
+    toggle: function(toShow) {
+      if (toShow === undefined) {
+        toShow = !this.visible;
+      }
+      this._ele.style.display = toShow ? '' : 'none';
+      document[toShow ? 'addEventListener' : 'removeEventListener']('click', this._listeners.hide);
+    }
+  };
+
   // The color palette to pick a color, by default hidden.
   var ColorPicker = {
-    ele: null,
-    _listeners: {},
+    __proto__: BarPopup,
     usePrefix: false,
     get selected() {
       return Utils.prefs.get('color', '#FF0000');
@@ -926,30 +958,25 @@ window.ssInstalled = true;
       this.selected = evt.target.color;
     },
     init: function() {
-      // Setup colorpicker
-      this.ele = document.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'colorpicker');
-      this.ele.id = 'colorpicker';
-      this.parent.ele.appendChild(this.ele);
-      this._listeners.hide = (function() {
-        this.visible = false;
-      }).bind(this);
-      this.ele.addEventListener('select', this.select.bind(this));
+      this._init();
 
-      // Hide colorpicker
+      this._ele = document.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'colorpicker');
+      this._ele.id = 'colorpicker';
+      this._ele.addEventListener('select', this.select.bind(this));
+
       this.hide();
     }
   };
 
   // The dropdown list to select font size, by default hidden.
   var FontSelect = {
-    ele: null,
-    _listeners: {},
+    __proto__: BarPopup,
     init: function() {
-      this.ele = Utils.qs('#button-fontSize').appendChild(Utils.qs('#fontselect'));
-      this._listeners.hide = (function() {
-        this.visible = false;
-      }).bind(this);
-      this.ele.addEventListener('click', this.click.bind(this));
+      this._init();
+
+      this._ele = Utils.qs('#fontselect');
+      this._ele.addEventListener('click', this.click.bind(this));
+
       this.hide();
     },
     click: function(evt) {
@@ -963,7 +990,16 @@ window.ssInstalled = true;
   var Panel = function(options) {
     this._listeners = {};
     Utils.extend(this, options);
-    this.ele = Utils.qs('#button-' + this.id);
+    /* this._options = Utils.extend({
+      id: null,
+      refresh: Utils.emptyFunction,
+      click: Utils.emptyFunction,
+      child: null
+    }, options);*/
+    if (!this.id) {
+      throw new Error("id is mandatory");
+    }
+    this._ele = Utils.qs('#button-' + this.id);
   };
   Panel.prototype = {
     _init: function() {
@@ -973,56 +1009,23 @@ window.ssInstalled = true;
         this.refresh();
         Utils.prefs.observe(this.id, this.refresh.bind(this));
       }
-      // click() is to called when panel (not its child) is clicked
+      // click() is called when panel (not its child) is clicked
       if (this.click) {
         this._listeners.click = this.click.bind(this);
-        this.ele.addEventListener('click', this._listeners.click);
+        this._ele.addEventListener('click', this._listeners.click);
       }
       // A panel doesn't have child if nothing pops out on click
       // child refers to things like FontSelect and ColorPicker
-      if (this.child) {
-        this._initChild();
-      }
+      this._initChild();
     },
     _initChild: function() {
-      this.child.parent = this;
-      Object.defineProperty(this.child, 'visible', {
-        enumerable: true,
-        get: function() {
-          return this.ele.style.display != 'none';
-        },
-        set: function(value) {
-          this.toggle(value);
-          this.parent.toggle(value);
-        }
-      });
-      Utils.extend(this.child, {
-        show: function() {
-          this.toggle(true);
-        },
-        hide: function() {
-          this.toggle(false);
-        },
-        toggle: function(toShow) {
-          if (toShow === undefined) {
-            toShow = !this.visible;
-          }
-          this.ele.style.display = toShow ? '' : 'none';
-          if (this._listeners.hide) {
-            if (toShow) {
-              document.addEventListener('click', this._listeners.hide);
-            } else {
-              document.removeEventListener('click', this._listeners.hide);
-            }
-          }
-        }
-      });
-      if (this.child.init) {
+      if (this.child) {
         this.child.init();
+        this._ele.appendChild(this.child._ele);
       }
     },
     get pressed() {
-      return this.ele.classList.contains('current');
+      return this._ele.classList.contains('current');
     },
     set pressed(value) {
       this.toggle(value);
@@ -1040,30 +1043,26 @@ window.ssInstalled = true;
       if (toPress === undefined) {
         toPress = !this.pressed;
       }
-      this.ele.classList[toPress ? 'add' : 'remove']('current');
+      this._ele.classList[toPress ? 'add' : 'remove']('current');
     }
   };
 
   // Floatbar represents 2nd-level menubar floating above screenshot
   // and contains none or several panels
   var Floatbar = {
-    ele: null,
+    _ele: null,
     panels: {},
     buttonEle: null, // Which button Floatbar is for/under
     init: function() {
       var self = this;
-      this.ele = Utils.qs('#floatbar');
+      this._ele = Utils.qs('#floatbar');
 
       // Generate panels
       Utils.instantiate(Panel, this.panels, [{
         id: 'lineWidth',
         refresh: function() {
-          Array.prototype.forEach.call(this.ele.getElementsByTagName('li'), function(li) {
-            if (li.value == BaseControl.lineWidth) {
-              li.classList.add('current');
-            } else {
-              li.classList.remove('current');
-            }
+          Array.prototype.forEach.call(this._ele.getElementsByTagName('li'), function(li) {
+            li.classList[li.value == BaseControl.lineWidth ? 'add' : 'remove']('current');
           });
         },
         click: function(evt) {
@@ -1075,7 +1074,7 @@ window.ssInstalled = true;
         id: 'fontSize',
         child: FontSelect,
         refresh: function() {
-          this.ele.firstChild.textContent = BaseControl.fontSize + ' px';
+          this._ele.firstChild.textContent = BaseControl.fontSize + ' px';
         },
         click: function(evt) {
           this.pressed = !this.pressed;
@@ -1086,7 +1085,7 @@ window.ssInstalled = true;
         id: 'color',
         child: ColorPicker,
         refresh: function() {
-          this.ele.firstChild.style.backgroundColor = ColorPicker.selected;
+          this._ele.firstChild.style.backgroundColor = ColorPicker.selected;
         },
         click: function(evt) {
           this.pressed = !this.pressed;
@@ -1103,8 +1102,8 @@ window.ssInstalled = true;
       this.hide();
     },
     reposition: function() {
-      if (this.ele && this.buttonEle) {
-        this.ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
+      if (this._ele && this.buttonEle) {
+        this._ele.style.left = this.buttonEle.getBoundingClientRect().left + 'px';
       }
     },
     show: function(button, panelsToShow) {
@@ -1113,16 +1112,16 @@ window.ssInstalled = true;
         this.reposition();
       }
 
-      this.ele.style.display = '';
+      this._ele.style.display = '';
 
       if (panelsToShow) {
         Object.keys(this.panels).forEach(function(id) {
-          this.panels[id].ele.style.display = panelsToShow.indexOf(id) >= 0 ? 'inline-block' : 'none';
+          this.panels[id]._ele.style.display = panelsToShow.indexOf(id) >= 0 ? 'inline-block' : 'none';
         }, this);
       }
     },
     hide: function() {
-      this.ele.style.display = 'none';
+      this._ele.style.display = 'none';
     }
   };
 
@@ -1130,14 +1129,14 @@ window.ssInstalled = true;
   var Button = function(options) {
     Utils.extend(this, options);
     // id is a must
-    this.ele = Utils.qs('#button-' + this.id);
+    this._ele = Utils.qs('#button-' + this.id);
   };
   Button.prototype = {
     start: function() {
-      this.ele.classList.add('current');
-      Editor._current = this.ele;
+      this._ele.classList.add('current');
+      Editor._current = this._ele;
       if (this.floatbar) {
-        Floatbar.show(this.ele, this.floatbar);
+        Floatbar.show(this._ele, this.floatbar);
       }
       var canvas = Editor.canvas;
       Editor._controls[this.id].start(
@@ -1147,7 +1146,7 @@ window.ssInstalled = true;
         parseInt(canvas.offsetHeight, 10)
       );
     },
-    finish: function() {},
+    finish: Utils.emptyFunction,
     clear: function() {
       Editor._current.classList.remove('current');
       Editor._current = null;
