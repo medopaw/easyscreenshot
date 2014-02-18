@@ -38,14 +38,6 @@ window.ssInstalled = true;
       }
       return dst;
     },
-    /* Generate new attributes of hostObj from Class
-       options is collection of cunstructor parameters
-       option.id is a must, as attribute name */
-    instantiate: function(Class, hostObj, options) {
-      options.forEach(function(option) {
-        hostObj[option.id] = new Class(option);
-      });
-    },
     /* Use callback to wait for main loop to finish its job */
     interrupt: function(callback) {
       setTimeout(callback, 0);
@@ -993,12 +985,6 @@ window.ssInstalled = true;
   // BarItem are inside Floatbar, and only represent the UI part
   var BarItem = function(options) {
     Utils.extend(this, options);
-    /* this._options = Utils.extend({
-      id: null,
-      refresh: Utils.emptyFunction,
-      click: Utils.emptyFunction,
-      popup: null
-    }, options);*/
     Utils.assert(this.id, 'id is mandatory');
     this._ele = Utils.qs('#button-' + this.id);
   };
@@ -1055,43 +1041,43 @@ window.ssInstalled = true;
       this._ele = Utils.qs('#floatbar');
 
       // Generate items
-      Utils.instantiate(BarItem, this.items, [{
-        id: 'lineWidth',
-        refresh: function() {
-          Array.prototype.forEach.call(this._ele.getElementsByTagName('li'), function(li) {
-            li.classList[li.value == BaseControl.lineWidth ? 'add' : 'remove']('current');
-          });
-        },
-        click: function(evt) {
-          if (evt.target.nodeName == 'li') {
-            BaseControl.lineWidth = evt.target.value;
+      this.items = {
+        lineWidth: new BarItem({
+          id: 'lineWidth',
+          refresh: function() {
+            Array.prototype.forEach.call(this._ele.getElementsByTagName('li'), function(li) {
+              li.classList[li.value == BaseControl.lineWidth ? 'add' : 'remove']('current');
+            });
+          },
+          click: function(evt) {
+            if (evt.target.nodeName == 'li') {
+              BaseControl.lineWidth = evt.target.value;
+            }
           }
-        }
-      }, {
-        id: 'fontSize',
-        _popup: FontSelect,
-        refresh: function() {
-          this._ele.firstChild.textContent = BaseControl.fontSize + ' px';
-        },
-        click: function(evt) {
-          Floatbar.pressItem(this);
-          // this.pressed = !this.pressed;
-          // self.items.color.pressed = false;
-          evt.stopPropagation();
-        }
-      }, {
-        id: 'color',
-        _popup: ColorPicker,
-        refresh: function() {
-          this._ele.firstChild.style.backgroundColor = ColorPicker.selected;
-        },
-        click: function(evt) {
-          Floatbar.pressItem(this);
-          // this.pressed = !this.pressed;
-          // self.items.fontSize.pressed = false;
-          evt.stopPropagation();
-        }
-      }]);
+        }),
+        fontSize: new BarItem({
+          id: 'fontSize',
+          _popup: FontSelect,
+          refresh: function() {
+            this._ele.firstChild.textContent = BaseControl.fontSize + ' px';
+          },
+          click: function(evt) {
+            Floatbar.pressItem(this);
+            evt.stopPropagation();
+          }
+        }),
+        color: new BarItem ({
+          id: 'color',
+          _popup: ColorPicker,
+          refresh: function() {
+            this._ele.firstChild.style.backgroundColor = ColorPicker.selected;
+          },
+          click: function(evt) {
+            Floatbar.pressItem(this);
+            evt.stopPropagation();
+          }
+        })
+      };
 
       // Init items
       for (var id in this.items) {
@@ -1289,56 +1275,68 @@ window.ssInstalled = true;
         text: ['fontSize', 'color']
       };
       // Generate buttons
-      Utils.instantiate(Button, this.buttons, [{
-        id: 'crop',
-        key: 'X',
-        finish: function() {
-          Editor._controls.crop.stop();
-        }
-      }, {
-        id: 'rectangle',
-        key: 'R',
-        floatbar: floatbars.line
-      }, {
-        id: 'line',
-        key: 'D',
-        floatbar: floatbars.line
-      }, {
-        id: 'pencil',
-        key: 'F',
-        floatbar: floatbars.line
-      }, {
-        id: 'circle',
-        key: 'E',
-        floatbar: floatbars.line
-      }, {
-        id: 'text',
-        key: 'T',
-        floatbar: floatbars.text
-      }, {
-        id: 'blur',
-        key: 'B'
-      }, {
-        id: 'undo',
-        key: 'Z',
-        simple: true,
-        start: Editor._undo.bind(Editor)
-      }, {
-        id: 'local',
-        key: 'S',
-        simple: true,
-        start: Editor._saveLocal.bind(Editor)
-      }, {
-        id: 'copy',
-        key: 'C',
-        simple: true,
-        start: Editor._copyToClipboard.bind(Editor)
-      }, {
-        id: 'cancel',
-        key: 'Q',
-        simple: true,
-        start: Editor._cancelAndClose.bind(Editor)
-      }]);
+      this.buttons = {
+        crop: new Button({
+          id: 'crop',
+          key: 'X',
+          finish: function() {
+            Editor._controls.crop.stop();
+          }
+        }),
+        rectangle: new Button({
+          id: 'rectangle',
+          key: 'R',
+          floatbar: floatbars.line
+        }),
+        line: new Button({
+          id: 'line',
+          key: 'D',
+          floatbar: floatbars.line
+        }),
+        pencil: new Button({
+          id: 'pencil',
+          key: 'F',
+          floatbar: floatbars.line
+        }),
+        circle: new Button({
+          id: 'circle',
+          key: 'E',
+          floatbar: floatbars.line
+        }),
+        text: new Button({
+          id: 'text',
+          key: 'T',
+          floatbar: floatbars.text
+        }),
+        blur: new Button({
+          id: 'blur',
+          key: 'B'
+        }),
+        undo: new Button({
+          id: 'undo',
+          key: 'Z',
+          simple: true,
+          start: Editor._undo.bind(Editor)
+        }),
+        local: new Button({
+          id: 'local',
+          key: 'S',
+          simple: true,
+          start: Editor._saveLocal.bind(Editor)
+        }),
+        copy: new Button({
+          id: 'copy',
+          key: 'C',
+          simple: true,
+          start: Editor._copyToClipboard.bind(Editor)
+        }),
+        cancel: new Button({
+          id: 'cancel',
+          key: 'Q',
+          simple: true,
+          start: Editor._cancelAndClose.bind(Editor)
+        })
+      };
     },
     _undo: function() {
       if(this._history.length > 1) {
