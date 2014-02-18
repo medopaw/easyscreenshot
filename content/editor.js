@@ -920,17 +920,12 @@ window.ssInstalled = true;
 
   // Base class of ColorPicker & FontSelect
   var BarPopup = {
-    _ele: null,
-    _listeners: {},
-    _init: function() {
-      this._listeners.hide = () => this.visible = false;
-    },
     get visible() {
       return this._ele.style.display != 'none';
     },
     set visible(value) {
       this.toggle(value);
-      this.parent.toggle(value);
+      this._anchor.toggle(value);
     },
     show: function() {
       this.toggle(true);
@@ -950,6 +945,9 @@ window.ssInstalled = true;
   // The color palette to pick a color, by default hidden.
   var ColorPicker = {
     __proto__: BarPopup,
+    _ele: null,
+    _anchor: null,
+    _listeners: {},
     usePrefix: false,
     get selected() {
       return Utils.prefs.get('color', '#FF0000');
@@ -961,7 +959,7 @@ window.ssInstalled = true;
       this.selected = evt.target.color;
     },
     init: function() {
-      this._init();
+      this._listeners.hide = () => this.visible = false;
 
       this._ele = document.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'colorpicker');
       this._ele.id = 'colorpicker';
@@ -974,8 +972,11 @@ window.ssInstalled = true;
   // The dropdown list to select font size, by default hidden.
   var FontSelect = {
     __proto__: BarPopup,
+    _ele: null,
+    _anchor: null,
+    _listeners: {},
     init: function() {
-      this._init();
+      this._listeners.hide = () => this.visible = false;
 
       this._ele = Utils.qs('#fontselect');
       this._ele.addEventListener('click', this.click.bind(this));
@@ -1014,9 +1015,10 @@ window.ssInstalled = true;
       this._initPopup();
     },
     _initPopup: function() {
-      if (this.popup) {
-        this.popup.init();
-        this._ele.appendChild(this.popup._ele);
+      if (this._popup) {
+        this._popup.init();
+        this._popup._anchor = this;
+        this._ele.appendChild(this._popup._ele);
       }
     },
     get pressed() {
@@ -1024,8 +1026,8 @@ window.ssInstalled = true;
     },
     set pressed(value) {
       this.toggle(value);
-      if (this.popup) {
-        this.popup.toggle(value);
+      if (this._popup) {
+        this._popup.toggle(value);
       }
     },
     press: function() {
@@ -1067,24 +1069,26 @@ window.ssInstalled = true;
         }
       }, {
         id: 'fontSize',
-        popup: FontSelect,
+        _popup: FontSelect,
         refresh: function() {
           this._ele.firstChild.textContent = BaseControl.fontSize + ' px';
         },
         click: function(evt) {
-          this.pressed = !this.pressed;
-          self.items.color.pressed = false;
+          Floatbar.pressItem(this);
+          // this.pressed = !this.pressed;
+          // self.items.color.pressed = false;
           evt.stopPropagation();
         }
       }, {
         id: 'color',
-        popup: ColorPicker,
+        _popup: ColorPicker,
         refresh: function() {
           this._ele.firstChild.style.backgroundColor = ColorPicker.selected;
         },
         click: function(evt) {
-          this.pressed = !this.pressed;
-          self.items.fontSize.pressed = false;
+          Floatbar.pressItem(this);
+          // this.pressed = !this.pressed;
+          // self.items.fontSize.pressed = false;
           evt.stopPropagation();
         }
       }]);
@@ -1117,6 +1121,14 @@ window.ssInstalled = true;
     },
     hide: function() {
       this._ele.style.display = 'none';
+    },
+    pressItem: function(item) {
+      for (var i in this.items) {
+        if (this.items[i].id != item.id) {
+          this.items[i].pressed = false;
+        }
+      }
+      item.pressed = !item.pressed;
     }
   };
 
