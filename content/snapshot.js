@@ -75,7 +75,8 @@
         .getService(Ci.nsIAlertsService)
         .showAlertNotification('chrome://easyscreenshot/skin/image/easyscreenshot.png',
           document.getElementById("easyscreenshot-strings")
-                  .getString('failToCaptureNotification'));
+                  .getString('failToCaptureNotification'),
+          null);
     }
   };
 
