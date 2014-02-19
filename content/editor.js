@@ -29,16 +29,21 @@ window.ssInstalled = true;
       }
     },
     emptyFunction: function() {},
-    /* Copy all attributes of one object into another
-     * No error thrown if src is undefined */
+    /**
+     * Copy all attributes of one object into another
+     * No error thrown if src is undefined
+     */
     extend: function(dst, src, preserveExisting) {
       for (var i in src) {
-        if (!preserveExisting || dst[i] === undefined)
-        dst[i] = src[i];
+        if (!preserveExisting || dst[i] === undefined) {
+          dst[i] = src[i];
+        }
       }
       return dst;
     },
-    /* Use callback to wait for main loop to finish its job */
+    /*
+     * Use callback to wait for main loop to finish its job
+     */
     interrupt: function(callback) {
       setTimeout(callback, 0);
     },
@@ -47,11 +52,14 @@ window.ssInstalled = true;
         throw new Error(message);
       }
     },
-    /* Simple downloading tool function */
+    /*
+     * Simple downloading tool function
+     */
     download: function(url, path, onsuccess, onerror, oncancel) {
       var jsm = {};
       try {
-        Cu.import('resource://gre/modules/Downloads.jsm', jsm);
+        XPCOMUtils.defineLazyModuleGetter(jsm, 'Downloads',
+          'resource://gre/modules/Downloads.jsm');
       } catch(ex) {}
 
       if (jsm.Downloads && jsm.Downloads.getList) {
@@ -123,8 +131,8 @@ window.ssInstalled = true;
           },
           onDownloadStateChange: function(aPrevState, aDownload) {
             if (aDownload.source.spec == source.spec &&
-              aDownload.targetFile.path == target.file.path &&
-              this.complete.indexOf(aDownload.state) >= 0) {
+                aDownload.targetFile.path == target.file.path &&
+                this.complete.indexOf(aDownload.state) >= 0) {
               downloadManager.removeListener(downloadProgressListener);
               switch (this.status(aDownload.state)) {
                 case 'success': {
@@ -151,8 +159,10 @@ window.ssInstalled = true;
               }
             }
           },
-          /* These blank functions are to prevent exceptions.
-             See https://developer.mozilla.org/en-US/docs/XPCOM_Interface_Reference/nsIDownloadProgressListener#Example */
+          /*
+           * These blank functions are to prevent exceptions.
+           * See https://developer.mozilla.org/en-US/docs/XPCOM_Interface_Reference/nsIDownloadProgressListener#Example
+           */
           onSecurityChange: function(prog, req, state, dl) {},
           onProgressChange: function(prog, req, prog, progMax, tProg, tProgMax, dl) {},
           onStateChange: function(prog, req, flags, status, dl) {}
@@ -163,7 +173,9 @@ window.ssInstalled = true;
         persist.saveURI(source, null, null, null, null, target, null);
       }
     },
-    /* Simple string bundle tool object */
+    /*
+     * Simple string bundle tool object
+     */
     strings: {
       _bundle: Services.strings.createBundle('chrome://easyscreenshot/locale/easyscreenshot.properties'),
       get: function(name, args) {
@@ -261,9 +273,11 @@ window.ssInstalled = true;
         .getService(Ci.nsIAlertsService)
         .showAlertNotification('chrome://easyscreenshot/skin/image/easyscreenshot.png', title, text);
     },
-    /* e.g. (#FFFFFF, 0.5) => (255, 255, 255, 0.5) */
+    /*
+     * e.g. (#FFFFFF, 0.5) => (255, 255, 255, 0.5)
+     */
     hex2rgba: function(hex, alpha) {
-      if (/^#/.test(hex) && hex.length == 7 && alpha !== undefined) {
+      if (hex.length == 7 && hex[0] === '#' && alpha !== undefined) {
         return 'rgba('
           + parseInt(hex.slice(1, 3), 16) + ','
           + parseInt(hex.slice(3, 5), 16) + ','
@@ -410,9 +424,7 @@ window.ssInstalled = true;
       this._hide();
     },
     reposition: function() {
-      if (this._overlay.overlay && Editor.canvas) {
         this._overlay.overlay.style.left = Editor.canvas.getBoundingClientRect().left + 'px';
-      }
     },
     start: function(x, y, w, h) {
       this._display(x, y, w, h, 0, 0, 0, 0);
@@ -763,7 +775,7 @@ window.ssInstalled = true;
         this.style.height = this.scrollHeight + 'px';
       });
       // Disallow scroll. Make sure content on screen doesn't scroll away.
-      this._input.addEventListener('scroll',function(evt) {
+      this._input.addEventListener('scroll', function(evt) {
         this.scrollTop = 0;
         this.scrollLeft = 0;
       });
@@ -984,20 +996,24 @@ window.ssInstalled = true;
 
   // BarItem are inside Floatbar, and only represent the UI part
   var BarItem = function(options) {
+    /* options contains:
+     * id
+     * refresh (update display of item according to prefs)
+     * click
+     */
     Utils.extend(this, options);
     Utils.assert(this.id, 'id is mandatory');
+    Utils.assert(this.refresh, 'refresh method is mandatory');
+    Utils.assert(this.click, 'click method is mandatory');
     this._ele = Utils.qs('#button-' + this.id);
+    this._init();
   };
   BarItem.prototype = {
     _init: function() {
       // refresh() is to update display of item according to prefs
-      Utils.assert(this.refresh, 'refresh method is mandatory');
       this.refresh();
       Utils.prefs.observe(this.id, this.refresh.bind(this));
-
-      Utils.assert(this.click, 'click method is mandatory');
       this._ele.addEventListener('click', this.click.bind(this));
-
       this._initPopup();
     },
     _initPopup: function() {
@@ -1079,15 +1095,10 @@ window.ssInstalled = true;
         })
       };
 
-      // Init items
-      for (var id in this.items) {
-        this.items[id]._init();
-      }
-
       this.hide();
     },
     reposition: function() {
-      if (this._ele && this.anchorEle) {
+      if (this.anchorEle) {
         this._ele.style.left = this.anchorEle.getBoundingClientRect().left + 'px';
       }
     },
@@ -1420,10 +1431,9 @@ window.ssInstalled = true;
 
   window.addEventListener('load', function(evt) {
     Editor.init();
-  });
-
-  window.addEventListener('resize', function(evt) {
-    Floatbar.reposition();
-    CropOverlay.reposition();
+    window.addEventListener('resize', function(evt) {
+      Floatbar.reposition();
+      CropOverlay.reposition();
+    });
   });
 })();

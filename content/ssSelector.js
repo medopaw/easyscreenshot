@@ -847,7 +847,7 @@
         'ssSelector-controls',
         null,
         notificationBox.PRIORITY_INFO_HIGH, [{
-          label:    getString('knowledge'),
+          label:    getString('acknowledge'),
           accessKey:  'K',
           callback:  function() {
             try {
@@ -868,8 +868,8 @@
 
     var showNotification = true;
     var prefs = Components.classes['@mozilla.org/preferences-service;1']
-            .getService(Components.interfaces.nsIPrefService)
-            .getBranch('extensions.easyscreenshot.');
+                          .getService(Components.interfaces.nsIPrefService)
+                          .getBranch('extensions.easyscreenshot.');
     try {
       showNotification = prefs.getBoolPref('showNotification');
     } catch (ex) {

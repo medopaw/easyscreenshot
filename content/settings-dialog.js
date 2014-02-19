@@ -20,8 +20,10 @@ var settings = {
         return dnldMgr.defaultDownloadsDirectory;
         break;
       }
+      default: {
+        throw "ASSERTION FAILED: folder type should be 'Desktop' or 'Downloads'";
+      }
     }
-    throw "ASSERTION FAILED: folder type should be 'Desktop' or 'Downloads'";
   },
 
   _folderToIndex: function(aFolder) {

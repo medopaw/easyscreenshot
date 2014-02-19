@@ -62,13 +62,6 @@
       ctx.drawWindow(contentWindow, x, y, width, height, 'rgb(255,255,255)');
     } catch(err) {
       success = false;
-      if (Notification && Notification.permission === 'granted') {
-        new Notification(document.getElementById("easyscreenshot-strings")
-                                 .getString('failToCaptureNotification'), {
-          tag: 'easyscreenshot',
-          icon: 'chrome://easyscreenshot/skin/image/easyscreenshot.png'
-        });
-      }
     }
 
     if (width != canvas.width || height != canvas.height) {
@@ -78,7 +71,11 @@
     if (success) {
       sendSnapshot(canvas, ctx);
     } else {
-      // Services.prompt.alert(window, _strings.getString('snapshotFailedTitle'), _strings.getString('snapshotFailedWarning'));
+      Cc['@mozilla.org/alerts-service;1']
+        .getService(Ci.nsIAlertsService)
+        .showAlertNotification('chrome://easyscreenshot/skin/image/easyscreenshot.png',
+          document.getElementById("easyscreenshot-strings")
+                  .getString('failToCaptureNotification'));
     }
   };
 
@@ -134,7 +131,8 @@
   }
 
   ns.openSnapshotFeedback = function() {
-    gBrowser.selectedTab = gBrowser.addTab('http://mozilla.com.cn/addon/325-easyscreenshot/');
+    var src = 'http://mozilla.com.cn/addon/325-easyscreenshot/';
+    gBrowser.selectedTab = gBrowser.addTab(src);
   }
 
   window.addEventListener('load', function() {
