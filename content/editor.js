@@ -29,9 +29,9 @@ window.ssInstalled = true;
       }
     },
     emptyFunction: function() {},
-    /**
-     * Copy all attributes of one object into another
-     * No error thrown if src is undefined
+    /*
+     * Copy all attributes of one object into another.
+     * No error thrown if src is undefined.
      */
     extend: function(dst, src, preserveExisting) {
       for (var i in src) {
@@ -41,9 +41,7 @@ window.ssInstalled = true;
       }
       return dst;
     },
-    /*
-     * Use callback to wait for main loop to finish its job
-     */
+    /* Use callback to wait for main loop to finish its job */
     interrupt: function(callback) {
       setTimeout(callback, 0);
     },
@@ -52,9 +50,7 @@ window.ssInstalled = true;
         throw new Error(message);
       }
     },
-    /*
-     * Simple downloading tool function
-     */
+    /* Simple downloading tool function */
     download: function(url, path, onsuccess, onerror, oncancel) {
       var jsm = {};
       try {
@@ -173,9 +169,7 @@ window.ssInstalled = true;
         persist.saveURI(source, null, null, null, null, target, null);
       }
     },
-    /*
-     * Simple string bundle tool object
-     */
+    /* Simple string bundle tool object */
     strings: {
       _bundle: Services.strings.createBundle('chrome://easyscreenshot/locale/easyscreenshot.properties'),
       get: function(name, args) {
@@ -273,9 +267,7 @@ window.ssInstalled = true;
         .getService(Ci.nsIAlertsService)
         .showAlertNotification('chrome://easyscreenshot/skin/image/easyscreenshot.png', title, text || null);
     },
-    /*
-     * e.g. (#FFFFFF, 0.5) => (255, 255, 255, 0.5)
-     */
+    /* e.g. (#FFFFFF, 0.5) => (255, 255, 255, 0.5) */
     hex2rgba: function(hex, alpha) {
       if (hex.length == 7 && hex[0] === '#' && alpha !== undefined) {
         return 'rgba('
@@ -667,10 +659,10 @@ window.ssInstalled = true;
     _size: {},
     _refreshSize: function() {
       // Factor 1.2 per character looks good
-      const FACTOR = 1.2;
+      var factor = 1.2;
       // Initial size set to 2x1 characters
-      this._size.width = Math.ceil(BaseControl.fontSize * FACTOR * 2);
-      this._size.height = Math.ceil(BaseControl.fontSize * FACTOR);
+      this._size.width = Math.ceil(BaseControl.fontSize * factor * 2);
+      this._size.height = Math.ceil(BaseControl.fontSize * factor);
     },
     _refreshImageData: function() {
       var textRect = this._input.getBoundingClientRect();
@@ -708,10 +700,10 @@ window.ssInstalled = true;
 
       this._refreshSize();
       // marginX and marginY are to leave some minimal space between text input and page edge
-      const MARGINX = 10;
-      const MARGINY = 5;
-      var maxWidth = this._origRect[0] + this._origRect[2] - evt.pageX - MARGINX;
-      var maxHeight = this._origRect[1] + this._origRect[3] - evt.pageY - MARGINY;
+      var marginX = 10;
+      var marginY = 5;
+      var maxWidth = this._origRect[0] + this._origRect[2] - evt.pageX - marginX;
+      var maxHeight = this._origRect[1] + this._origRect[3] - evt.pageY - marginY;
       // Don't show text input if too close to page edge
       if (maxWidth <= 0 || maxHeight <= 0) {
         this._hide();
@@ -742,7 +734,11 @@ window.ssInstalled = true;
       this._input.style.display = '';
       this._input.focus();
 
-      // Let Chinese input method put all characters first
+      // This is to fix a bug that if you're using Chinese input method that
+      // directly input letters into text input before pressing Space or Enter,
+      // and clicks other place during inputting Chinese,
+      // all unfinished letters would comes into new text input.
+      // interrupt funcion here is to let Chinese input method put all characters first.
       Utils.interrupt((function() {
         this._input.value = '';
         this._input.style.width = initialWidth + 'px';
@@ -890,9 +886,9 @@ window.ssInstalled = true;
       if (this._isStartPoint(evt)) {
         var rx = evt.pageX - this._origRect[0];
         var ry = evt.pageY - this._origRect[1];
-        const FACTOR = 0.75;
+        var factor = 0.75;
 
-        Editor.ctx.arc(rx, ry, BaseControl.lineWidth * FACTOR, 0, Math.PI * 2, true);
+        Editor.ctx.arc(rx, ry, BaseControl.lineWidth * factor, 0, Math.PI * 2, true);
         Editor.ctx.fill();
       }
       Editor.ctx.closePath();
