@@ -54,8 +54,7 @@ window.ssInstalled = true;
     download: function(url, path, onsuccess, onerror, oncancel) {
       var jsm = {};
       try {
-        XPCOMUtils.defineLazyModuleGetter(jsm, 'Downloads',
-          'resource://gre/modules/Downloads.jsm');
+        Cu.import('resource://gre/modules/Downloads.jsm', jsm);
       } catch(ex) {}
 
       if (jsm.Downloads && jsm.Downloads.getList) {
