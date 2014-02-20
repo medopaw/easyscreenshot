@@ -53,9 +53,15 @@ window.ssInstalled = true;
     /* Simple downloading tool function */
     download: function(url, path, onsuccess, onerror, oncancel) {
       var jsm = {};
-      try {
-        Cu.import('resource://gre/modules/Downloads.jsm', jsm);
-      } catch(ex) {}
+      XPCOMUtils.defineLazyGetter(jsm, 'Downloads', function() {
+        var tmp = {};
+        try {
+          Cu.import('resource://gre/modules/Downloads.js', tmp);
+        } catch (ex) {
+          return null;
+        }
+        return tmp.Downloads;
+      });
 
       if (jsm.Downloads && jsm.Downloads.getList) {
         jsm.Downloads.getList(jsm.Downloads.ALL).then(function(aDownloadList) {
