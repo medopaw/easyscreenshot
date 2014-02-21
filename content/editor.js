@@ -9,6 +9,15 @@ window.ssInstalled = true;
     'resource://gre/modules/Services.jsm');
   XPCOMUtils.defineLazyModuleGetter(this, 'SnapshotStorage',
     'resource://easyscreenshot/snapshot.js');
+  XPCOMUtils.defineLazyGetter(this, 'Downloads', function() {
+    var tmp = {};
+    try {
+      Cu.import('resource://gre/modules/Downloads.jsm', tmp);
+    } catch (ex) {
+      return null;
+    }
+    return tmp.Downloads;
+  });
 
   var Utils = {
     parse: function(element) {
@@ -52,20 +61,9 @@ window.ssInstalled = true;
     },
     /* Simple downloading tool function */
     download: function(url, path, onsuccess, onerror, oncancel) {
-      var jsm = {};
-      XPCOMUtils.defineLazyGetter(jsm, 'Downloads', function() {
-        var tmp = {};
-        try {
-          Cu.import('resource://gre/modules/Downloads.js', tmp);
-        } catch (ex) {
-          return null;
-        }
-        return tmp.Downloads;
-      });
-
-      if (jsm.Downloads && jsm.Downloads.getList) {
-        jsm.Downloads.getList(jsm.Downloads.ALL).then(function(aDownloadList) {
-          jsm.Downloads.createDownload({
+      if (Downloads && Downloads.getList) {
+        Downloads.getList(Downloads.ALL).then(function(aDownloadList) {
+          Downloads.createDownload({
             source: url,
             target: path,
             launchWhenSucceeded: false
