@@ -12,6 +12,13 @@ ns.ceEasyScreenshot = {
         break;
       case 'load':
         setTimeout(this.init.bind(this), 500);
+        // On some page after restart, no event other than load is triggerd,
+        // thus icon will stay disabled no matter what isHttp() returns.
+        // The reason of this is still uncertain. Here's the dirty fix by
+        // manually checking isHttp() after 1 sec.
+        setTimeout(function() {
+          this.updateUI(this.isHttp());
+        }.bind(this), 1000);
         // *break* removed here to make updateUI triggered on load event also
       case 'TabSelect':
       case 'DOMContentLoaded':
@@ -31,10 +38,11 @@ ns.ceEasyScreenshot = {
   isHttp: function ce_easyscreenshot__isHttp(){
     var tab = gBrowser.mCurrentTab;
     var uri = null;
-    if(tab && tab.linkedBrowser)
+    if (tab && tab.linkedBrowser) {
       uri = tab.linkedBrowser.currentURI;
+    }
 
-    return (uri && (uri.scheme == 'http' || uri.scheme == 'https'));
+    return uri && (uri.schemeIs('http') || uri.schemeIs('https'));
   },
 
   updateUI: function ce_easyscreenshot__updateUI(isHttp){
