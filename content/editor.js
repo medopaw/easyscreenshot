@@ -29,7 +29,7 @@ window.ssInstalled = true;
       }
     },
     emptyFunction: function() {},
-    /*
+    /**
      * Copy all attributes of one object into another.
      * No error thrown if src is undefined.
      */
@@ -160,7 +160,7 @@ window.ssInstalled = true;
               }
             }
           },
-          /*
+          /**
            * These blank functions are to prevent exceptions.
            * See https://developer.mozilla.org/en-US/docs/XPCOM_Interface_Reference/nsIDownloadProgressListener#Example
            */
@@ -995,13 +995,11 @@ window.ssInstalled = true;
     }
   };
 
-  // BarItem are inside Floatbar, and only represent the UI part
+  /* BarItems are inside Floatbar, and only represent the UI part */
   var BarItem = function(options) {
-    /* options contains:
-     * id
-     * refresh (update display of item according to prefs)
-     * click
-     */
+    // options must contains id,
+    // refresh (update display of item according to prefs),
+    // and click
     Utils.extend(this, options);
     Utils.assert(this.id, 'id is mandatory');
     Utils.assert(this.refresh, 'refresh method is mandatory');
@@ -1130,10 +1128,12 @@ window.ssInstalled = true;
     }
   };
 
-  // Define button structure
+  /* Define button structure */
   var Button = function(options) {
+    // options contains id,
+    // and may contain start, finish and clear
     Utils.extend(this, options);
-    // id is a must
+    Utils.assert(this.id, 'id is mandatory');
     this._ele = Utils.qs('#button-' + this.id);
   };
   Button.prototype = {
