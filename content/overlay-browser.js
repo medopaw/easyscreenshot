@@ -19,7 +19,7 @@ ns.ceEasyScreenshot = {
         setTimeout(function() {
           this.updateUI(this.isHttp());
         }.bind(this), 1000);
-        // *break* removed here to make updateUI triggered on load event also
+        break;
       case 'TabSelect':
       case 'DOMContentLoaded':
         this.updateUI(this.isHttp());

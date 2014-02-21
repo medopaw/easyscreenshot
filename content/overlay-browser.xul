@@ -40,7 +40,8 @@
         class="toolbarbutton-1 chromeclass-toolbar-additional"
         label="&easyscreenshot.button.label;"
         tooltiptext="&easyscreenshot.button.tooltip;"
-        oncommand="MOA.ESS.ceEasyScreenshot.onCommand();event.stopPropagation();">
+        oncommand="MOA.ESS.ceEasyScreenshot.onCommand();event.stopPropagation();"
+        disabled="true">
         <menupopup>
             <menuitem id="easyscreenshot-snapshot-select" label="&easyscreenshot_snapshot_select;" accesskey="c" key="key-snapshot-select" command="cmd-snapshot-select"/>
             <menuitem id="easyscreenshot-snapshot-entire" label="&easyscreenshot_snapshot_entire;" accesskey="l" key="key-snapshot-entire" command="cmd-snapshot-entire"/>
