@@ -1,16 +1,16 @@
 /* vim: set ts=2 et sw=2 tw=80: */
 (function() {
-  var jsm = { };
+  var jsm = {};
   if (typeof XPCOMUtils == 'undefined') {
     Cu.import('resource://gre/modules/XPCOMUtils.jsm');
   }
   XPCOMUtils.defineLazyGetter(jsm, 'utils', function() {
-    let obj = { };
+    let obj = {};
     Cu['import']('resource://easyscreenshot/utils.jsm', obj);
     return obj.utils;
   });
   XPCOMUtils.defineLazyGetter(jsm, 'SnapshotStorage', function() {
-    let obj = { };
+    let obj = {};
     Cu['import']('resource://easyscreenshot/snapshot.js', obj);
     return obj.SnapshotStorage;
   });
@@ -47,10 +47,8 @@
         _logger.trace('unknown part argument')
     }
 
-    var canvas = null;
-    var success = true;
     try {
-      canvas = contentDocument.createElementNS('http://www.w3.org/1999/xhtml', 'html:canvas');
+      var canvas = contentDocument.createElementNS('http://www.w3.org/1999/xhtml', 'html:canvas');
       canvas.height = height;
       canvas.width = width;
 
@@ -60,17 +58,13 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
       ctx.drawWindow(contentWindow, x, y, width, height, 'rgb(255,255,255)');
-    } catch(err) {
-      success = false;
-    }
 
-    if (width != canvas.width || height != canvas.height) {
-      success = false;
-    }
+      if (width != canvas.width || height != canvas.height) {
+        throw new Error("Size error");
+      }
 
-    if (success) {
       sendSnapshot(canvas, ctx);
-    } else {
+    } catch(ex) {
       Cc['@mozilla.org/alerts-service;1']
         .getService(Ci.nsIAlertsService)
         .showAlertNotification('chrome://easyscreenshot/skin/image/easyscreenshot.png',
