@@ -33,12 +33,16 @@
     var width, height, x, y;
     switch (part) {
       case 'visible':
+        // Cancel selection mode first.
+        ns.cancel();
         x = contentDocument.documentElement.scrollLeft;
         y = contentDocument.documentElement.scrollTop;
         width = contentDocument.documentElement.clientWidth;
         height = contentDocument.documentElement.clientHeight;
         break;
       case 'entire':
+        // Cancel selection mode first.
+        ns.cancel();
         x = y = 0;
         width = Math.max(contentDocument.documentElement.scrollWidth, contentDocument.body.scrollWidth);
         height = Math.max(contentDocument.documentElement.scrollHeight, contentDocument.body.scrollHeight);
