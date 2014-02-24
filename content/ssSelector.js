@@ -805,7 +805,7 @@
       event_release(widget.window, 'unload', action_close);
       event_release(widget.window, 'keydown', action_keydown);
       event_release(widget.selection, 'dblclick', action_save);
-      event_release(widget.document, 'ssSelector.cancel', action_close);
+      event_release(widget.document, 'ssSelector:cancel', action_close);
 
       widget.root.removeChild(styles);
       widget.root.removeChild(widget.overlay);
@@ -815,7 +815,7 @@
         notificationBox.removeAllNotifications(true);
       }
     };
-    event_connect(widget.document, 'ssSelector.cancel', action_close);
+    event_connect(widget.document, 'ssSelector:cancel', action_close);
 
     var action_save = function() {
       //todo: show editor
@@ -893,7 +893,7 @@
 
   ns.cancel = function() {
     var doc = window.top.getBrowser().selectedBrowser.contentWindow.document;
-    var evt = doc.defaultView.CustomEvent('ssSelector.cancel');
+    var evt = doc.defaultView.CustomEvent('ssSelector:cancel');
     doc.dispatchEvent(evt);
   };
 })();
