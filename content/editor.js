@@ -1202,8 +1202,8 @@ window.ssInstalled = true;
       var oldID = this._current ? this._getID(this._current) : '';
       var newID = newCurrent ? this._getID(newCurrent) : '';
 
-      var oldBtn = this.buttons[oldID];
-      var newBtn = this.buttons[newID];
+      var oldBtn = oldID ? this.buttons[oldID] : null;
+      var newBtn = newID ? this.buttons[newID] : null;
 
       // Clear last button, normally clearing style and hiding floatbar
       if (oldBtn && !oldBtn.simple) {
@@ -1211,7 +1211,9 @@ window.ssInstalled = true;
       }
       // finish() will only be called when a pressed button is clicked
       // start() is the main task this button is binding to
-      newBtn[!newBtn.simple && newID == oldID ? 'finish' : 'start']();
+      if (newBtn) {
+        newBtn[!newBtn.simple && newID == oldID ? 'finish' : 'start']();
+      }
     },
     init: function() {
       var self = this;
