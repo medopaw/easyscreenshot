@@ -805,6 +805,7 @@
       event_release(widget.window, 'unload', action_close);
       event_release(widget.window, 'keydown', action_keydown);
       event_release(widget.selection, 'dblclick', action_save);
+      event_release(widget.document, 'ssSelector.cancel', action_close);
 
       widget.root.removeChild(styles);
       widget.root.removeChild(widget.overlay);
@@ -813,12 +814,9 @@
       if (notificationBox) {
         notificationBox.removeAllNotifications(true);
       }
-
-      // No need to cancel after turning selection mode off.
-      ns.cancel = function() {};
     };
-    // For getSnapshot to call before capturing entire page or visible part.
-    ns.cancel = action_close;
+    event_connect(widget.document, 'ssSelector.cancel', action_close);
+
     var action_save = function() {
       //todo: show editor
       var data = capture();
@@ -893,6 +891,9 @@
     event_connect(widget.selection, 'dblclick', action_save);
   };
 
-  // Initially, selection mode is off.
-  ns.cancel = function() {};
+  ns.cancel = function() {
+    var doc = window.top.getBrowser().selectedBrowser.contentWindow.document;
+    var evt = doc.defaultView.CustomEvent('ssSelector.cancel');
+    doc.dispatchEvent(evt);
+  };
 })();
