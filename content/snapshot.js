@@ -69,6 +69,13 @@
 
       sendSnapshot(canvas, ctx);
     } catch(ex) {
+      Cu.reportError('Unable to capture screenshot with\n' +
+                     'url: ' + contentWindow.location + '\n' +
+                     'x: ' + x + '\n' +
+                     'y: ' + y + '\n' +
+                     'width: ' + width + '\n' +
+                     'height: ' + height + '\n' +
+                     'error: ' + ex);
       Cc['@mozilla.org/alerts-service;1']
         .getService(Ci.nsIAlertsService)
         .showAlertNotification('chrome://easyscreenshot/skin/image/easyscreenshot.png',
